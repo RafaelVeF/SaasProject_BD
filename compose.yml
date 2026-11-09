@@ -1,0 +1,36 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: nexusflow-mongodb
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - saas-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    build: .
+    container_name: nexusflow-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - config.env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - saas-network
+
+volumes:
+  mongo_data:
+
+networks:
+  saas-network:
+    driver: bridge

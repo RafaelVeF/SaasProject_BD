@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusFlow SaaS – Gestion de Projet Multi-Tenant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .kanban-col { min-height: 65vh; }
+        .dragging { opacity: 0.4; transform: scale(0.98); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.6); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.8); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- BARRE SUPÉRIEURE : ISOLATION TENANT (ENTREPRISE) -->
+    <header class="bg-slate-800/90 backdrop-blur border-b border-slate-700 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-40">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black px-3 py-1.5 rounded-lg shadow-md tracking-wider">
+                NF
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight flex items-center gap-2">
+                    NexusFlow
+                    <span class="text-[10px] uppercase font-semibold tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">
+                        SaaS Multi-Tenant
+                    </span>
+                </h1>
+                <p class="text-xs text-slate-400">
+                    Isolation stricte par <code class="text-indigo-400 font-mono font-semibold">X-Company-Id</code>
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2.5">
+            <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-700">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <label for="companySelect" class="text-xs uppercase tracking-wider text-slate-400 font-semibold">
+                    Entreprise :
+                </label>
+                <select id="companySelect" onchange="switchCompany(this.value)" class="bg-transparent text-sm font-medium text-slate-200 outline-none cursor-pointer">
+                    <!-- Généré dynamiquement -->
+                </select>
+            </div>
+
+            <button onclick="openCompanyModal()" class="bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold px-3 py-2 rounded-lg transition shadow flex items-center gap-1.5">
+                <span>+</span> Entreprise
+            </button>
+            <button onclick="deleteCurrentCompany()" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 text-xs font-semibold px-3 py-2 rounded-lg transition" title="Supprimer l'entreprise active">
+                Supprimer
+            </button>
+            <button onclick="seedDemoData()" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1">
+                <span>⚡</span> Réinitialiser & Démo
+            </button>
+        </div>
+    </header>
+
+    <!-- CONTENU PRINCIPAL -->
+    <div class="flex-1 flex overflow-hidden">
+
+        <!-- BARRE LATÉRALE : PROJETS & COLLABORATEURS -->
+        <aside class="w-80 bg-slate-800/50 border-r border-slate-700 p-5 flex flex-col gap-6 overflow-y-auto">
+            <!-- Section Projets -->
+            <div>
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Projets de l'entreprise</h2>
+                    <button onclick="openProjectModal()" class="text-xs bg-slate-700 hover:bg-slate-600 px-2.5 py-1 rounded text-slate-200 transition font-medium">
+                        + Projet
+                    </button>
+                </div>
+                <div id="projectList" class="space-y-2">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+
+            <hr class="border-slate-700/80">
+
+            <!-- Section Collaborateurs -->
+            <div>
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Collaborateurs (Tenant)</h2>
+                    <button onclick="openUserModal()" class="text-xs bg-slate-700 hover:bg-slate-600 px-2.5 py-1 rounded text-slate-200 transition font-medium">
+                        + Membre
+                    </button>
+                </div>
+                <div id="userList" class="space-y-2">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- ZONE CENTRALE : TABLEAU KANBAN DU PROJET -->
+        <main class="flex-1 p-6 overflow-x-auto flex flex-col bg-slate-900">
+            <div id="projectHeader" class="flex flex-wrap justify-between items-center gap-4 mb-6 pb-4 border-b border-slate-800">
+                <div>
+                    <h2 id="activeProjectTitle" class="text-2xl font-bold text-white tracking-tight">
+                        Sélectionnez ou créez un projet
+                    </h2>
+                    <p id="activeProjectDesc" class="text-sm text-slate-400 mt-0.5"></p>
+                </div>
+
+                <div id="kanbanControls" class="hidden flex items-center gap-3 flex-wrap">
+                    <select id="filterAssignee" onchange="renderKanban()" class="bg-slate-800 border border-slate-700 text-xs px-3 py-2 rounded-lg text-slate-300 outline-none">
+                        <option value="">Tous les membres</option>
+                    </select>
+                    <select id="filterPriority" onchange="renderKanban()" class="bg-slate-800 border border-slate-700 text-xs px-3 py-2 rounded-lg text-slate-300 outline-none">
+                        <option value="">Toutes les priorités</option>
+                        <option value="CRITICAL">Critique</option>
+                        <option value="HIGH">Haute</option>
+                        <option value="MEDIUM">Moyenne</option>
+                        <option value="LOW">Basse</option>
+                    </select>
+                    <button onclick="openTaskModal()" class="bg-indigo-600 hover:bg-indigo-500 text-sm font-semibold px-4 py-2 rounded-lg transition shadow flex items-center gap-1.5">
+                        <span>+</span> Nouvelle Tâche
+                    </button>
+                </div>
+            </div>
+
+            <!-- Colonnes Kanban -->
+            <div id="kanbanBoard" class="grid grid-cols-1 md:grid-cols-4 gap-5 flex-1 min-h-[60vh]">
+                <!-- Colonnes générées dynamiquement -->
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALE GÉNÉRIQUE -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black/75 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-lg font-bold text-white"></h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+            </div>
+            <form id="modalForm" class="space-y-4"></form>
+        </div>
+    </div>
+
+    <script>
+        let companies = [];
+        let currentCompanyId = null;
+        let users = [];
+        let projects = [];
+        let currentProject = null;
+        let tasks = [];
+
+        const COLUMNS = [
+            { id: 'TODO', label: 'À faire', badge: 'bg-slate-500' },
+            { id: 'IN_PROGRESS', label: 'En cours', badge: 'bg-blue-500' },
+            { id: 'REVIEW', label: 'En revue', badge: 'bg-amber-500' },
+            { id: 'DONE', label: 'Terminé', badge: 'bg-emerald-500' }
+        ];
+
+        const PRIORITY_STYLE = {
+            LOW: 'bg-slate-800 text-slate-300 border border-slate-700',
+            MEDIUM: 'bg-blue-500/15 text-blue-300 border border-blue-500/30',
+            HIGH: 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium',
+            CRITICAL: 'bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold animate-pulse'
+        };
+
+        // Wrapper API avec injection systématique du header d'isolation X-Company-Id
+        async function api(url, options = {}) {
+            const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+            if (currentCompanyId) {
+                headers['X-Company-Id'] = currentCompanyId;
+            }
+            const res = await fetch(url, { ...options, headers });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ error: 'Erreur réseau inconnue' }));
+                alert(err.error || 'Erreur lors de la requête API');
+                throw new Error(err.error || 'API Error');
+            }
+            return res.json();
+        }
+
+        async function init() {
+            try {
+                companies = await api('/api/companies');
+                if (companies.length === 0) {
+                    await seedDemoData(false);
+                    return;
+                }
+                renderCompanySelect();
+                await switchCompany(companies[0]._id);
+            } catch (e) {
+                console.error("Initialisation error:", e);
+            }
+        }
+
+        function renderCompanySelect() {
+            const sel = document.getElementById('companySelect');
+            sel.innerHTML = companies.map(c => `
+                <option value="${c._id}">${c.name} [${c.plan}]</option>
+            `).join('');
+            if (currentCompanyId) sel.value = currentCompanyId;
+        }
+
+        async function switchCompany(companyId) {
+            currentCompanyId = companyId;
+            currentProject = null;
+            tasks = [];
+            renderCompanySelect();
+            await Promise.all([loadUsers(), loadProjects()]);
+            if (projects.length > 0) {
+                await selectProject(projects[0]._id);
+            } else {
+                renderKanban();
+            }
+        }
+
+        async function loadUsers() {
+            users = await api('/api/users');
+            const container = document.getElementById('userList');
+            if (users.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic">Aucun collaborateur dans cette entreprise.</p>`;
+            } else {
+                container.innerHTML = users.map(u => `
+                    <div class="flex items-center justify-between bg-slate-900/60 px-3 py-2 rounded-lg border border-slate-700/60 hover:border-slate-600 transition">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow" style="background-color: ${u.avatarColor || '#6366f1'}">
+                                ${u.name ? u.name.substring(0, 2).toUpperCase() : '??'}
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium leading-tight text-slate-200">${u.name}</div>
+                                <div class="text-[11px] text-slate-400">${u.role} · ${u.email}</div>
+                            </div>
+                        </div>
+                        <button onclick="deleteUser('${u._id}')" class="text-slate-500 hover:text-rose-400 text-xs px-1" title="Retirer le collaborateur">✕</button>
+                    </div>
+                `).join('');
+            }
+
+            const filterSel = document.getElementById('filterAssignee');
+            filterSel.innerHTML = `<option value="">Tous les membres</option>` +
+                users.map(u => `<option value="${u._id}">${u.name}</option>`).join('');
+        }
+
+        async function loadProjects() {
+            projects = await api('/api/projects');
+            const container = document.getElementById('projectList');
+            if (projects.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic">Aucun projet créé pour l'instant.</p>`;
+                return;
+            }
+
+            container.innerHTML = projects.map(p => {
+                const active = currentProject && currentProject._id === p._id;
+                return `
+                    <div onclick="selectProject('${p._id}')" class="cursor-pointer p-3 rounded-xl border transition ${active ? 'bg-indigo-600/20 border-indigo-500/70 shadow' : 'bg-slate-900/40 border-slate-700/60 hover:border-slate-600'}">
+                        <div class="flex justify-between items-start">
+                            <span class="font-semibold text-sm ${active ? 'text-indigo-200' : 'text-slate-200'}">${p.name}</span>
+                            <button onclick="event.stopPropagation(); deleteProject('${p._id}')" class="text-slate-500 hover:text-rose-400 text-xs px-1">✕</button>
+                        </div>
+                        <p class="text-xs text-slate-400 truncate mt-1">${p.description || 'Sans description'}</p>
+                        <div class="flex items-center gap-1 mt-2.5">
+                            ${(p.memberIds || []).map(m => `
+                                <span title="${m.name || 'Membre'}" class="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white" style="background-color: ${m.avatarColor || '#6366f1'}">
+                                    ${m.name ? m.name.substring(0, 2).toUpperCase() : '?'}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function selectProject(projectId) {
+            currentProject = projects.find(p => p._id === projectId) || null;
+            loadProjects();
+            if (!currentProject) return;
+
+            document.getElementById('activeProjectTitle').textContent = currentProject.name;
+            document.getElementById('activeProjectDesc').textContent = currentProject.description || 'Tableau Kanban du projet';
+            document.getElementById('kanbanControls').classList.remove('hidden');
+
+            tasks = await api(`/api/projects/${projectId}/tasks`);
+            renderKanban();
+        }
+
+        function renderKanban() {
+            const board = document.getElementById('kanbanBoard');
+            if (!currentProject) {
+                document.getElementById('activeProjectTitle').textContent = 'Aucun projet actif';
+                document.getElementById('activeProjectDesc').textContent = 'Créez ou sélectionnez un projet dans la barre latérale pour afficher le tableau.';
+                document.getElementById('kanbanControls').classList.add('hidden');
+                board.innerHTML = '';
+                return;
+            }
+
+            const assigneeFilter = document.getElementById('filterAssignee').value;
+            const priorityFilter = document.getElementById('filterPriority').value;
+
+            const filteredTasks = tasks.filter(t => {
+                if (assigneeFilter && (!t.assigneeId || t.assigneeId._id !== assigneeFilter)) return false;
+                if (priorityFilter && t.priority !== priorityFilter) return false;
+                return true;
+            });
+
+            board.innerHTML = COLUMNS.map(col => {
+                const colTasks = filteredTasks.filter(t => t.status === col.id);
+                return `
+                    <div class="bg-slate-800/40 border border-slate-700/80 rounded-2xl p-4 flex flex-col kanban-col shadow-inner"
+                         ondragover="event.preventDefault()"
+                         ondrop="dropTask(event, '${col.id}')">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-700/60">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full ${col.badge}"></span>
+                                <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">${col.label}</h3>
+                            </div>
+                            <span class="text-xs bg-slate-900 px-2 py-0.5 rounded-full text-slate-400 font-semibold border border-slate-700/60">
+                                ${colTasks.length}
+                            </span>
+                        </div>
+
+                        <div class="space-y-3 flex-1 overflow-y-auto">
+                            ${colTasks.map(t => `
+                                <div draggable="true" ondragstart="dragTask(event, '${t._id}')"
+                                     class="bg-slate-900 border border-slate-700/80 hover:border-indigo-500/60 rounded-xl p-3.5 shadow transition cursor-grab active:cursor-grabbing">
+                                    <div class="flex justify-between items-start gap-2 mb-2">
+                                        <span class="text-[10px] px-2 py-0.5 rounded uppercase tracking-wider ${PRIORITY_STYLE[t.priority] || PRIORITY_STYLE.MEDIUM}">
+                                            ${t.priority}
+                                        </span>
+                                        <div class="flex gap-1.5">
+                                            <button onclick="openTaskModal('${t._id}')" class="text-xs text-slate-400 hover:text-indigo-400">✎</button>
+                                            <button onclick="deleteTask('${t._id}')" class="text-xs text-slate-400 hover:text-rose-400">✕</button>
+                                        </div>
+                                    </div>
+
+                                    <h4 class="font-semibold text-sm mb-1 text-slate-100">${t.title}</h4>
+                                    ${t.description ? `<p class="text-xs text-slate-400 mb-3">${t.description}</p>` : ''}
+
+                                    <div class="flex flex-wrap gap-1 mb-3">
+                                        ${(t.tags || []).map(tag => `
+                                            <span class="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-1.5 py-0.5 rounded">
+                                                #${tag}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+
+                                    <div class="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+                                        ${t.assigneeId ? `
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white" style="background-color: ${t.assigneeId.avatarColor || '#6366f1'}">
+                                                    ${t.assigneeId.name ? t.assigneeId.name.substring(0, 2).toUpperCase() : '?'}
+                                                </span>
+                                                <span class="text-slate-300 truncate max-w-[90px]">${t.assigneeId.name}</span>
+                                            </div>
+                                        ` : `<span class="text-slate-500 italic text-[11px]">Non assignée</span>`}
+
+                                        <select onchange="changeTaskStatus('${t._id}', this.value)" class="bg-slate-800 border border-slate-700 text-[11px] rounded px-1.5 py-0.5 text-slate-300 outline-none">
+                                            ${COLUMNS.map(c => `<option value="${c.id}" ${c.id === t.status ? 'selected' : ''}>${c.label}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Drag & Drop
+        let draggedTaskId = null;
+        function dragTask(ev, taskId) {
+            draggedTaskId = taskId;
+            ev.dataTransfer.setData('text/plain', taskId);
+        }
+
+        async function dropTask(ev, newStatus) {
+            ev.preventDefault();
+            if (!draggedTaskId) return;
+            await changeTaskStatus(draggedTaskId, newStatus);
+            draggedTaskId = null;
+        }
+
+        async function changeTaskStatus(taskId, status) {
+            await api(`/api/tasks/${taskId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ status })
+            });
+            tasks = await api(`/api/projects/${currentProject._id}/tasks`);
+            renderKanban();
+        }
+
+        // Modales CRUD
+        function showModal(title, formHtml, onSubmit) {
+            document.getElementById('modalTitle').textContent = title;
+            const form = document.getElementById('modalForm');
+            form.innerHTML = formHtml + `
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-700">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-lg text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 transition">
+                        Annuler
+                    </button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-xs bg-indigo-600 hover:bg-indigo-500 font-semibold text-white transition shadow">
+                        Enregistrer
+                    </button>
+                </div>
+            `;
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                await onSubmit(new FormData(form));
+                closeModal();
+            };
+            const overlay = document.getElementById('modalOverlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('modalOverlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+
+        function openCompanyModal() {
+            showModal('Nouvelle Entreprise (Tenant)', `
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Nom de l'entreprise</label>
+                    <input name="name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Plan SaaS</label>
+                    <select name="plan" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+                        <option value="PRO">PRO</option>
+                        <option value="ENTERPRISE">ENTERPRISE</option>
+                        <option value="FREE">FREE</option>
+                    </select>
+                </div>
+            `, async (fd) => {
+                const comp = await api('/api/companies', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: fd.get('name'), plan: fd.get('plan') })
+                });
+                companies = await api('/api/companies');
+                await switchCompany(comp._id);
+            });
+        }
+
+        function openUserModal() {
+            showModal('Ajouter un Collaborateur', `
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Nom complet</label>
+                    <input name="name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Email professionnel</label>
+                    <input name="email" type="email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Rôle / Titre</label>
+                    <input name="role" value="Développeur" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+            `, async (fd) => {
+                await api('/api/users', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: fd.get('name'), email: fd.get('email'), role: fd.get('role') })
+                });
+                await loadUsers();
+            });
+        }
+
+        function openProjectModal() {
+            const userCheckboxes = users.map(u => `
+                <label class="flex items-center gap-2 text-xs bg-slate-900 px-3 py-2 rounded-lg border border-slate-700/80 cursor-pointer hover:border-slate-600">
+                    <input type="checkbox" name="memberIds" value="${u._id}" checked class="rounded text-indigo-600 focus:ring-0">
+                    <span>${u.name} <span class="text-slate-400">(${u.role})</span></span>
+                </label>
+            `).join('');
+
+            showModal('Nouveau Projet', `
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Nom du projet</label>
+                    <input name="name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Description</label>
+                    <textarea name="description" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Membres assignés au projet</label>
+                    <div class="space-y-1 max-h-36 overflow-y-auto pr-1">
+                        ${userCheckboxes || '<p class="text-xs text-slate-500 italic">Aucun utilisateur disponible.</p>'}
+                    </div>
+                </div>
+            `, async (fd) => {
+                const proj = await api('/api/projects', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: fd.get('name'),
+                        description: fd.get('description'),
+                        memberIds: fd.getAll('memberIds')
+                    })
+                });
+                await loadProjects();
+                await selectProject(proj._id);
+            });
+        }
+
+        function openTaskModal(taskId = null) {
+            const existing = taskId ? tasks.find(t => t._id === taskId) : null;
+            const projectMembers = (currentProject && currentProject.memberIds && currentProject.memberIds.length > 0)
+                ? currentProject.memberIds
+                : users;
+
+            showModal(existing ? 'Modifier la Tâche' : 'Créer une Tâche', `
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Titre de la tâche</label>
+                    <input name="title" required value="${existing ? existing.title : ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Description</label>
+                    <textarea name="description" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">${existing ? existing.description : ''}</textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1 font-medium">Statut</label>
+                        <select name="status" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+                            ${COLUMNS.map(c => `<option value="${c.id}" ${existing && existing.status === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1 font-medium">Priorité</label>
+                        <select name="priority" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+                            ${['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map(p => `<option value="${p}" ${(existing ? existing.priority : 'MEDIUM') === p ? 'selected' : ''}>${p}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Assigner à</label>
+                    <select name="assigneeId" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+                        <option value="">-- Non assignée --</option>
+                        ${projectMembers.map(u => `
+                            <option value="${u._id}" ${existing && existing.assigneeId && (existing.assigneeId._id || existing.assigneeId) === u._id ? 'selected' : ''}>
+                                ${u.name} (${u.role || 'Membre'})
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-medium">Tags (séparés par des virgules)</label>
+                    <input name="tags" placeholder="Backend, MongoDB, Urgent" value="${existing ? (existing.tags || []).join(', ') : ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+            `, async (fd) => {
+                const payload = {
+                    title: fd.get('title'),
+                    description: fd.get('description'),
+                    status: fd.get('status'),
+                    priority: fd.get('priority'),
+                    assigneeId: fd.get('assigneeId') || null,
+                    tags: fd.get('tags').split(',').map(s => s.trim()).filter(Boolean)
+                };
+
+                if (existing) {
+                    await api(`/api/tasks/${existing._id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    await api(`/api/projects/${currentProject._id}/tasks`, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                tasks = await api(`/api/projects/${currentProject._id}/tasks`);
+                renderKanban();
+            });
+        }
+
+        async function deleteCurrentCompany() {
+            if (!currentCompanyId) return;
+            if (!confirm("Supprimer définitivement cette entreprise et toutes ses données associées (utilisateurs, projets, tâches) ?")) return;
+
+            await api(`/api/companies/${currentCompanyId}`, { method: 'DELETE' });
+            companies = await api('/api/companies');
+            if (companies.length > 0) {
+                await switchCompany(companies[0]._id);
+            } else {
+                location.reload();
+            }
+        }
+
+        async function deleteUser(id) {
+            if (!confirm("Retirer ce collaborateur ?")) return;
+            await api(`/api/users/${id}`, { method: 'DELETE' });
+            await loadUsers();
+            if (currentProject) {
+                tasks = await api(`/api/projects/${currentProject._id}/tasks`);
+                renderKanban();
+            }
+        }
+
+        async function deleteProject(id) {
+            if (!confirm("Supprimer ce projet et toutes ses tâches ?")) return;
+            await api(`/api/projects/${id}`, { method: 'DELETE' });
+            await loadProjects();
+            if (projects.length > 0) {
+                await selectProject(projects[0]._id);
+            } else {
+                currentProject = null;
+                renderKanban();
+            }
+        }
+
+        async function deleteTask(id) {
+            if (!confirm("Supprimer cette tâche ?")) return;
+            await api(`/api/tasks/${id}`, { method: 'DELETE' });
+            tasks = await api(`/api/projects/${currentProject._id}/tasks`);
+            renderKanban();
+        }
+
+        async function seedDemoData(confirmPrompt = true) {
+            if (confirmPrompt && !confirm("Réinitialiser la base et charger les données de démonstration (Nebula Tech et GreenSolar Collectif) ?")) {
+                return;
+            }
+            await fetch('/api/seed', { method: 'POST' });
+            companies = await api('/api/companies');
+            renderCompanySelect();
+            if (companies.length > 0) {
+                await switchCompany(companies[0]._id);
+            }
+        }
+
+        // Démarrage automatique
+        init();
+    </script>
+</body>
+</html>
