@@ -5,6 +5,7 @@ const projectSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Company',
         required: [true, "L'identifiant de l'entreprise est obligatoire"],
+        immutable: true,
         index: true
     },
     name: {

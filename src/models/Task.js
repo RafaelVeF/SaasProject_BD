@@ -5,12 +5,14 @@ const taskSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Company',
         required: [true, "L'identifiant de l'entreprise est obligatoire"],
+        immutable: true,
         index: true
     },
     projectId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project',
         required: [true, "L'identifiant du projet est obligatoire"],
+        immutable: true,
         index: true
     },
     assigneeId: {

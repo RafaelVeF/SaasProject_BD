@@ -9,6 +9,9 @@ router.use(requireTenant);
 
 // GET /api/projects/:projectId/tasks - Tâches d'un projet pour l'entreprise
 router.get('/projects/:projectId/tasks', async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.projectId)) {
+        return res.status(400).json({ error: "Identifiant de projet invalide." });
+    }
     try {
         const tasks = await Task.find({
             companyId: req.companyId,
@@ -25,6 +28,9 @@ router.get('/projects/:projectId/tasks', async (req, res) => {
 
 // POST /api/projects/:projectId/tasks - Créer une tâche
 router.post('/projects/:projectId/tasks', async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.projectId)) {
+        return res.status(400).json({ error: "Identifiant de projet invalide." });
+    }
     try {
         const project = await Project.findOne({
             _id: req.params.projectId,
@@ -45,6 +51,7 @@ router.post('/projects/:projectId/tasks', async (req, res) => {
             }
         }
 
+        delete req.body._id;
         const task = await Task.create({
             ...req.body,
             companyId: req.companyId,
@@ -60,7 +67,14 @@ router.post('/projects/:projectId/tasks', async (req, res) => {
 
 // PUT /api/tasks/:id - Modifier une tâche (statut, assigné, priorité...)
 router.put('/tasks/:id', async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ error: "Identifiant de tâche invalide." });
+    }
     try {
+        delete req.body.companyId;
+        delete req.body.projectId;
+        delete req.body._id;
+
         if (req.body.assigneeId) {
             const validUser = await User.exists({
                 _id: req.body.assigneeId,
@@ -86,6 +100,9 @@ router.put('/tasks/:id', async (req, res) => {
 
 // DELETE /api/tasks/:id - Supprimer une tâche
 router.delete('/tasks/:id', async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ error: "Identifiant de tâche invalide." });
+    }
     try {
         const deleted = await Task.findOneAndDelete({ _id: req.params.id, companyId: req.companyId });
         if (!deleted) return res.status(404).json({ error: "Tâche introuvable." });

@@ -35,7 +35,12 @@ router.post('/', async (req, res) => {
 
 // PUT /api/users/:id - Modifier un collaborateur
 router.put('/:id', async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ error: "Identifiant utilisateur invalide." });
+    }
     try {
+        delete req.body.companyId;
+        delete req.body._id;
         const user = await User.findOneAndUpdate(
             { _id: req.params.id, companyId: req.companyId },
             req.body,
@@ -50,6 +55,9 @@ router.put('/:id', async (req, res) => {
 
 // DELETE /api/users/:id - Retirer un collaborateur
 router.delete('/:id', async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ error: "Identifiant utilisateur invalide." });
+    }
     try {
         const userId = req.params.id;
         const deleted = await User.findOneAndDelete({ _id: userId, companyId: req.companyId });

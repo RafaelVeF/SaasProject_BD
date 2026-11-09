@@ -27,7 +27,11 @@ router.post('/', async (req, res) => {
 
 // PUT /api/companies/:id - Modifier une entreprise
 router.put('/:id', async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ error: "Identifiant d'entreprise invalide." });
+    }
     try {
+        delete req.body._id;
         const company = await Company.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
         if (!company) return res.status(404).json({ error: "Entreprise introuvable." });
         res.json(company);
@@ -38,6 +42,9 @@ router.put('/:id', async (req, res) => {
 
 // DELETE /api/companies/:id - Suppression en cascade
 router.delete('/:id', async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ error: "Identifiant d'entreprise invalide." });
+    }
     try {
         const companyId = req.params.id;
         await Promise.all([

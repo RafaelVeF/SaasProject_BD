@@ -47,7 +47,12 @@ router.post('/', async (req, res) => {
 
 // PUT /api/projects/:id - Modifier un projet
 router.put('/:id', async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ error: "Identifiant de projet invalide." });
+    }
     try {
+        delete req.body.companyId;
+        delete req.body._id;
         if (req.body.memberIds && req.body.memberIds.length > 0) {
             const validMembers = await User.countDocuments({
                 _id: { $in: req.body.memberIds },
@@ -75,6 +80,9 @@ router.put('/:id', async (req, res) => {
 
 // DELETE /api/projects/:id - Supprimer un projet et ses tâches
 router.delete('/:id', async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ error: "Identifiant de projet invalide." });
+    }
     try {
         const deleted = await Project.findOneAndDelete({ _id: req.params.id, companyId: req.companyId });
         if (!deleted) return res.status(404).json({ error: "Projet introuvable." });
