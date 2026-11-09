@@ -38,6 +38,9 @@ L'objectif de ce projet est de réaliser l'ensemble des livrables de la **Partie
 ### 3.1 Base de Données MongoDB & Multi-Tenancy
 
 - **Modèle multi-tenant :** *Shared Database, Shared Schema* avec isolation logique stricte.
+- **Périmètre des collections opérationnelles (Code) :**
+  - Implémentation complète et fonctionnelle des 4 collections pivots du sujet : `companies`, `users`, `projects`, `tasks`.
+  - La spécification technique (`SPEC_TECHNIQUE.md` / `Architecture_BD.md`) documentera ces 4 collections en détail, ainsi que les extensions d'audit et d'invitation prévues pour la suite du SaaS.
 - **Dénormalisation de la clé de partitionnement :** Le champ `companyId` est obligatoirement présent au 1er niveau de toutes les collections filles (`users`, `projects`, `tasks`).
 - **Anticipation du Sharding (Partie II) :** Clé de sharding ciblée `{ companyId: 1, _id: 1 }` permettant de colocaliser toutes les données d'une même entreprise sur le même shard et d'éliminer le *scatter-gather*.
 - **Collections & Schémas :**
@@ -49,19 +52,24 @@ L'objectif de ce projet est de réaliser l'ensemble des livrables de la **Partie
   - `tasks` : `{ _id, companyId, projectId, assigneeId, title, description, status ('TODO'|'IN_PROGRESS'|'REVIEW'|'DONE'), priority ('LOW'|'MEDIUM'|'HIGH'|'CRITICAL'), tags: [String], dueDate, createdAt }`
     - Index composite : `{ companyId: 1, projectId: 1, status: 1 }`
 
-### 3.2 Backend Express & Middleware d'Isolation
+### 3.2 Backend Express, Authentification & Isolation
 
+- **Mode de résolution du Tenant (Sélecteur vs JWT) :**
+  - Conformément aux consignes du TD1 et pour garantir une évaluabilité immédiate par le correcteur sans barrière de login/mot de passe préalable, l'isolation repose sur la simulation de session d'espace de travail : le sélecteur d'entreprise du frontend envoie le header `X-Company-Id` à chaque requête API.
+  - Le middleware `requireTenant` valide ce header, contrôle l'existence du tenant en base et garantit qu'aucune donnée d'un autre tenant n'est lue ou altérée.
 - **Connexion agnostique :** Utilisation stricte de `process.env.MONGO_URI` (défini dans `config.env`), avec `maxPoolSize` et `serverSelectionTimeoutMS`.
-- **Middleware `requireTenant` :**
-  - Vérifie la présence et la validité du header HTTP `X-Company-Id`.
-  - Contrôle l'existence réelle de l'entreprise en base.
-  - Injecte `req.companyId` dans la requête.
 - **Sécurité inter-tenant :** Lors de la création d'un projet ou de l'assignation d'une tâche, validation stricte que les utilisateurs appartiennent bien à `req.companyId`.
 - **Suppression en cascade :**
   - La suppression d'une entreprise supprime immédiatement l'ensemble de ses utilisateurs, projets et tâches.
   - La suppression d'un projet supprime ses tâches.
   - La suppression d'un utilisateur le retire des `memberIds` des projets et désassigne ses tâches.
 - **Endpoint Démo (`POST /api/seed`) :** Réinitialise et injecte en 1 clic 2 entreprises témoins (*Nebula Tech* et *GreenSolar Collectif*) avec projets, collaborateurs et tâches pour tester l'isolation sans saisie manuelle.
+
+### 3.3 Structure du Dépôt sur la Branche `feat/td1-unified-saas`
+
+Pour respecter à la lettre l'exigence du sujet (*« L'application doit être entièrement fonctionnelle et pouvoir être démarrée à l'aide d'une seule commande, exécutée à la racine du projet : docker compose up -d --build »*) :
+- La racine du dépôt sur cette branche accueille directement les fichiers d'orchestration (`compose.yml`, `docker-compose.yml`, `Dockerfile`, `config.env`, `server.js`, `package.json`, `public/`).
+- Les anciens dossiers séparés `backend/` et `frontend/` (qui restent intacts sur la branche `main`) sont nettoyés sur cette branche pour éviter toute confusion lors de la notation et pour permettre la génération directe du zip de rendu.
 
 ### 3.3 Interface Utilisateur SPA (`public/index.html`)
 
