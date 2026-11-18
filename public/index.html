@@ -48,16 +48,20 @@
             </div>
 
             <button onclick="openCompanyModal()" class="bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold px-3 py-2 rounded-lg transition shadow flex items-center gap-1.5">
-                <span>+</span> Entreprise
+                <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span>Entreprise</span>
             </button>
-            <button onclick="openEditCompanyModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold px-2.5 py-2 rounded-lg transition" title="Modifier l'entreprise active">
-                ✎ Modifier
+            <button onclick="openEditCompanyModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold px-2.5 py-2 rounded-lg transition flex items-center gap-1.5" title="Modifier l'entreprise active">
+                <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                <span>Modifier</span>
             </button>
-            <button onclick="deleteCurrentCompany()" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 text-xs font-semibold px-3 py-2 rounded-lg transition" title="Supprimer l'entreprise active">
-                Supprimer
+            <button onclick="deleteCurrentCompany()" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 text-xs font-semibold px-2.5 py-2 rounded-lg transition flex items-center gap-1.5" title="Supprimer l'entreprise active">
+                <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <span>Supprimer</span>
             </button>
-            <button onclick="seedDemoData()" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1">
-                <span>⚡</span> Réinitialiser & Démo
+            <button onclick="seedDemoData()" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Réinitialiser & Démo</span>
             </button>
 
             <!-- PROFIL UTILISATEUR CONNECTÉ SIMULÉ -->
@@ -71,8 +75,9 @@
                         <!-- Options collaborateurs injectées -->
                     </select>
                 </div>
-                <button onclick="openProfileModal()" class="text-slate-400 hover:text-indigo-300 text-xs bg-slate-800 border border-slate-700 px-2 py-1.5 rounded-lg transition" title="Mon Profil">
-                    👤 Profil
+                <button onclick="openProfileModal()" class="text-slate-300 hover:text-white text-xs bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5" title="Mon Profil">
+                    <svg class="w-3.5 h-3.5 inline text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <span>Profil</span>
                 </button>
             </div>
         </div>
@@ -126,13 +131,16 @@
                 <!-- Navigation par onglets -->
                 <div id="viewTabs" class="hidden flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
                     <button id="tabKanban" onclick="switchView('kanban')" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition flex items-center gap-1.5 shadow">
-                        <span>📌</span> Kanban
+                        <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+                        <span>Kanban</span>
                     </button>
                     <button id="tabDashboard" onclick="switchView('dashboard')" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5">
-                        <span>📊</span> Tableau de bord
+                        <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span>Tableau de bord</span>
                     </button>
                     <button id="tabTeam" onclick="switchView('team')" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5">
-                        <span>👥</span> Équipe
+                        <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <span>Équipe</span>
                     </button>
                 </div>
 
@@ -191,7 +199,8 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 shadow">
                         <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                            <span>🎯</span> Répartition par Niveau de Priorité
+                            <svg class="w-4 h-4 inline text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Répartition par Niveau de Priorité</span>
                         </h3>
                         <div id="priorityBars" class="space-y-3.5">
                             <!-- Barres générées -->
@@ -200,7 +209,8 @@
 
                     <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 shadow">
                         <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                            <span>📊</span> Charge de Travail par Collaborateur
+                            <svg class="w-4 h-4 inline text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            <span>Charge de Travail par Collaborateur</span>
                         </h3>
                         <div id="workloadBars" class="space-y-3.5">
                             <!-- Barres générées -->
@@ -229,7 +239,9 @@
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="modalTitle" class="text-lg font-bold text-white"></h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700/60 transition" title="Fermer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
             <form id="modalForm" class="space-y-4"></form>
         </div>
@@ -244,7 +256,9 @@
                     <h3 id="chatTaskTitle" class="text-base font-bold text-white"></h3>
                     <p id="chatTaskDesc" class="text-xs text-slate-400 mt-0.5"></p>
                 </div>
-                <button onclick="closeChatModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+                <button onclick="closeChatModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700/60 transition" title="Fermer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
 
             <!-- Liste des messages -->
@@ -360,8 +374,12 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1">
-                            <button onclick="openEditUserModal('${u._id}')" class="text-slate-400 hover:text-indigo-400 text-xs px-1" title="Modifier le collaborateur">✎</button>
-                            <button onclick="deleteUser('${u._id}')" class="text-slate-500 hover:text-rose-400 text-xs px-1" title="Retirer le collaborateur">✕</button>
+                            <button onclick="openEditUserModal('${u._id}')" class="text-slate-400 hover:text-indigo-400 p-1 rounded hover:bg-slate-800 transition" title="Modifier le collaborateur">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </button>
+                            <button onclick="deleteUser('${u._id}')" class="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition" title="Retirer le collaborateur">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
                         </div>
                     </div>
                 `).join('');
@@ -404,8 +422,12 @@
                         <div class="flex justify-between items-start">
                             <span class="font-semibold text-sm ${active ? 'text-indigo-200' : 'text-slate-200'}">${p.name}</span>
                             <div class="flex items-center gap-1">
-                                <button onclick="event.stopPropagation(); openEditProjectModal('${p._id}')" class="text-slate-400 hover:text-indigo-400 text-xs px-1" title="Modifier le projet">✎</button>
-                                <button onclick="event.stopPropagation(); deleteProject('${p._id}')" class="text-slate-500 hover:text-rose-400 text-xs px-1" title="Supprimer le projet">✕</button>
+                                <button onclick="event.stopPropagation(); openEditProjectModal('${p._id}')" class="text-slate-400 hover:text-indigo-400 p-1 rounded hover:bg-slate-800 transition" title="Modifier le projet">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                </button>
+                                <button onclick="event.stopPropagation(); deleteProject('${p._id}')" class="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition" title="Supprimer le projet">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
                             </div>
                         </div>
                         <p class="text-xs text-slate-400 truncate mt-1">${p.description || 'Sans description'}</p>
@@ -521,13 +543,17 @@
                                             <span class="text-[10px] px-2 py-0.5 rounded uppercase tracking-wider ${PRIORITY_STYLE[t.priority] || PRIORITY_STYLE.MEDIUM}">
                                                 ${t.priority}
                                             </span>
-                                            <div class="flex gap-1.5 items-center">
-                                                <button onclick="openChatModal('${t._id}')" class="text-xs text-slate-400 hover:text-indigo-400 flex items-center gap-1 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700" title="Discussion / Commentaires">
-                                                    <span>💬</span>
-                                                    <span class="text-[10px]">${commentCount}</span>
+                                            <div class="flex gap-1 items-center">
+                                                <button onclick="openChatModal('${t._id}')" class="text-xs text-slate-400 hover:text-indigo-400 flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded border border-slate-700 transition" title="Discussion / Commentaires">
+                                                    <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                                    <span class="text-[10px] font-semibold">${commentCount}</span>
                                                 </button>
-                                                <button onclick="openTaskModal('${t._id}')" class="text-xs text-slate-400 hover:text-indigo-400 px-1">✎</button>
-                                                <button onclick="deleteTask('${t._id}')" class="text-xs text-slate-400 hover:text-rose-400 px-1">✕</button>
+                                                <button onclick="openTaskModal('${t._id}')" class="text-slate-400 hover:text-indigo-400 p-1 rounded hover:bg-slate-800 transition" title="Modifier la tâche">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                </button>
+                                                <button onclick="deleteTask('${t._id}')" class="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition" title="Supprimer la tâche">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
                                             </div>
                                         </div>
 

@@ -80,7 +80,7 @@
 - **Vue Équipe (Team View)** : Récapitulatif des membres du projet, compétences/rôles et volume de tâches attribuées.
 
 ### 4.8 Jeu de Données de Démonstration (Seed 1-Clic)
-- Un bouton d'action dédié (`⚡ Réinitialiser & Démo`) dans l'en-tête permet de générer en une seconde deux entreprises complètes, distinctes et réalistes :
+- Un bouton d'action dédié (`Réinitialiser & Démo`) dans l'en-tête permet de générer en une seconde deux entreprises complètes, distinctes et réalistes :
   1. **Nebula Tech (SaaS Cloud)** : Projet de sharding MongoDB avec tâches d'infrastructure et collaborateurs DevOps.
   2. **GreenSolar Collectif** : Projet solaire avec collaborateurs métier et tâches de télémétrie.
 - Ce jeu de test permet d'expérimenter immédiatement l'étanchéité du cloisonnement multi-tenant sans configuration manuelle.
