@@ -37,4 +37,9 @@ test('Frontend public/index.html exists and contains essential structure', () =>
     assert.ok(content.includes('ondragstart'), 'Must include ondragstart handler');
     assert.ok(content.includes('ondragover'), 'Must include ondragover handler');
     assert.ok(content.includes('ondrop'), 'Must include ondrop handler');
+
+    // Must have full CRUD operations (including edit)
+    assert.ok(content.includes('openEditCompanyModal'), 'Must support editing companies');
+    assert.ok(content.includes('openEditProjectModal'), 'Must support editing projects');
+    assert.ok(content.includes('openEditUserModal'), 'Must support editing users');
 });

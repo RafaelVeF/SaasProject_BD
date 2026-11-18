@@ -5,10 +5,8 @@ const Project = require('../models/Project');
 const User = require('../models/User');
 const requireTenant = require('../middleware/tenant');
 
-router.use(requireTenant);
-
 // GET /api/projects/:projectId/tasks - Tâches d'un projet pour l'entreprise
-router.get('/projects/:projectId/tasks', async (req, res) => {
+router.get('/projects/:projectId/tasks', requireTenant, async (req, res) => {
     if (!require('mongoose').Types.ObjectId.isValid(req.params.projectId)) {
         return res.status(400).json({ error: "Identifiant de projet invalide." });
     }
@@ -27,7 +25,7 @@ router.get('/projects/:projectId/tasks', async (req, res) => {
 });
 
 // POST /api/projects/:projectId/tasks - Créer une tâche
-router.post('/projects/:projectId/tasks', async (req, res) => {
+router.post('/projects/:projectId/tasks', requireTenant, async (req, res) => {
     if (!require('mongoose').Types.ObjectId.isValid(req.params.projectId)) {
         return res.status(400).json({ error: "Identifiant de projet invalide." });
     }
@@ -66,7 +64,7 @@ router.post('/projects/:projectId/tasks', async (req, res) => {
 });
 
 // PUT /api/tasks/:id - Modifier une tâche (statut, assigné, priorité...)
-router.put('/tasks/:id', async (req, res) => {
+router.put('/tasks/:id', requireTenant, async (req, res) => {
     if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
         return res.status(400).json({ error: "Identifiant de tâche invalide." });
     }
@@ -99,7 +97,7 @@ router.put('/tasks/:id', async (req, res) => {
 });
 
 // DELETE /api/tasks/:id - Supprimer une tâche
-router.delete('/tasks/:id', async (req, res) => {
+router.delete('/tasks/:id', requireTenant, async (req, res) => {
     if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
         return res.status(400).json({ error: "Identifiant de tâche invalide." });
     }

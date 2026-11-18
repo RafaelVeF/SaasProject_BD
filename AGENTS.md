@@ -2,49 +2,46 @@
 
 ## Repository Overview
 
-Two independent Node.js packages without a root workspace:
-- `backend/`: Express 5 REST API + Mongoose 9 (CommonJS).
-- `frontend/`: React 19 + Vite 8 SPA (ESM, styled with custom CSS).
-- `docker-compose.yml`: MongoDB 6.0 (`saas_mongo`), backend, and frontend containers.
+Unified Node.js / Express SaaS application (`nexusflow-saas`) serving an interactive Vanilla JS + Tailwind CSS Kanban SPA:
+- `server.js`: Express 5 application and static file server.
+- `src/`: Backend logic (Mongoose models in `src/models/`, REST routes in `src/routes/`, multi-tenant middleware in `src/middleware/`).
+- `public/`: Single Page Application with interactive Kanban, Drag & Drop, and multi-tenant workspace switcher (`public/index.html`).
+- `compose.yml` / `docker-compose.yml`: MongoDB 7.0 (`nexusflow-mongodb`) and application container (`nexusflow-app`).
+- `config.env`: Centralized environment variables (`PORT`, `MONGO_URI`, pool settings).
 
-Always run `npm` commands inside `backend/` or `frontend/`, not from the repo root.
+All `npm` commands are run directly from the repository root.
 
 ---
 
 ## Developer Commands
 
-### Backend (`cd backend`)
-- `npm install`: Install dependencies.
-- `npm run dev`: Start dev server with native `node --watch src/index.js` (Node 18+ required).
-- `npm start`: Start server via `node src/index.js`.
-- *Note:* `npm test` is currently an unconfigured stub (`exit 1`).
-
-### Frontend (`cd frontend`)
-- `npm install`: Install dependencies.
-- `npm run dev`: Start Vite dev server on `http://localhost:5173`.
-- `npm run lint`: Lint with `oxlint` (configured in `.oxlintrc.json`).
-- `npm run build`: Production build via `vite build`.
+### Application Root
+- `npm install`: Install dependencies (`express`, `mongoose`, `cors`, `dotenv`).
+- `npm run dev`: Start dev server with native `node --watch server.js`.
+- `npm start`: Start server via `node server.js`.
+- `npm test`: Run automated tests via `node --test tests/*.test.js`.
 
 ### Docker
-- `docker-compose up --build`: Build and run MongoDB (port 27017), API (port 5000), and frontend (port 5173).
-- *WSL Gotcha:* Requires Docker Desktop WSL 2 integration to be active.
+- `docker compose up -d --build` (or `docker-compose up -d --build`): Build and run MongoDB (internal) and the unified app on port 3000.
+- Application URL: `http://localhost:3000`.
 
 ---
 
 ## Architecture & Multi-Tenancy Rules
 
-Strict multi-tenant architecture (*shared database, shared schema*) defined in `Architecture_BD.md`:
-- **Tenant Isolation**: `companyId` is mandatory as a root field on all child collections (`users`, `projects`, `tasks`, `audit_logs`, `invitations`).
-- **Query Scoping**: Every API route and database operation must strictly filter by `companyId` extracted from the authenticated user's JWT context.
-- **Index Prefix**: All compound indexes must be prefixed with `companyId` (e.g., `{ companyId: 1, projectId: 1, status: 1, position: 1 }`).
-- **Kanban Ordering**: `tasks.position` is a floating-point number (fractional indexing) to enable drag-and-drop reordering without shifting adjacent tasks.
+Strict multi-tenant architecture (*shared database, shared schema*) defined in `SPEC_TECHNIQUE.md` / `Architecture_BD.md`:
+- **Tenant Isolation**: `companyId` is mandatory and immutable as a root field on all child collections (`users`, `projects`, `tasks`).
+- **Query Scoping**: Every API route and database operation strictly filters by `companyId` resolved via `X-Company-Id` header through `requireTenant` middleware.
+- **Index Prefix**: Compound indexes are strictly prefixed with `companyId` (e.g., `{ companyId: 1, projectId: 1, status: 1 }`).
+- **Part II Sharding Readiness**: Target shard key `{ companyId: 1, _id: 1 }` guarantees co-location of documents for each company and eliminates scatter-gather.
 
 ---
 
 ## Environment & Configuration
 
-- **Backend DB Connection**: In `backend/src/index.js`, MongoDB connection is conditional (`if (process.env.MONGO_URI)`). The API can run without Mongo for stubbed endpoints.
-- **Local vs Docker Mongo URI**:
-  - In Docker: `mongodb://admin:password@db:27017/saas_db?authSource=admin`
-  - Local without Docker: replace `db` with `localhost`.
-- **Frontend API Target**: Configured via `VITE_API_URL` (defaults to `http://localhost:5000` in code).
+- **Centralized Config**: Externalized in `config.env`.
+  - `PORT=3000`
+  - `MONGO_URI=mongodb://mongodb:27017/nexusflow_saas?directConnection=true`
+  - `MONGO_MAX_POOL_SIZE=20`
+  - `MONGO_TIMEOUT_MS=5000`
+- **Part II Transition**: Changing `MONGO_URI` to a replica set or `mongos` router requires zero code changes.

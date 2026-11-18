@@ -28,10 +28,12 @@
 ### 3.1 CRUD Collaborateurs (Users)
 - **Création** : Ajout d'un membre rattaché à l'entreprise active avec Nom, Email professionnel, Rôle (ex. *CTO, Product Lead, DevSecOps*) et assignation automatique d'une couleur d'avatar unique.
 - **Consultation** : Visualisation de la liste des collaborateurs dans la barre latérale.
+- **Modification** : Bouton d'édition (✎) sur chaque profil pour mettre à jour son nom, son email ou son rôle métier.
 - **Suppression** : Retrait du collaborateur de l'entreprise avec désassignation automatique de ses tâches et suppression de sa présence dans les équipes projet.
 
 ### 3.2 CRUD Projets
 - **Création** : Création d'un espace projet avec un nom, une description et la sélection des membres d'équipe parmi les utilisateurs de l'entreprise.
+- **Modification** : Bouton d'édition (✎) sur chaque projet pour actualiser son nom, sa description ou réassigner son équipe de collaborateurs.
 - **Validation inter-tenant** : Tout utilisateur extérieur à l'entreprise est rejeté lors de l'assignation.
 - **Suppression en cascade** : La suppression d'un projet supprime l'ensemble de ses tâches associées.
 
