@@ -48,4 +48,10 @@ test('Frontend public/index.html exists and contains essential structure', () =>
     assert.ok(content.includes('switchView'), 'Must support tabbed views (Kanban, Dashboard, Team)');
     assert.ok(content.includes('viewDashboardContainer'), 'Must include Dashboard analytics view');
     assert.ok(content.includes('viewTeamContainer'), 'Must include Team member view');
+
+    // Advanced: Real Authentication View & Theme Switcher
+    assert.ok(content.includes('authView'), 'Must include authentication screen');
+    assert.ok(content.includes('loginForm'), 'Must include login form');
+    assert.ok(content.includes('registerForm'), 'Must include registration form');
+    assert.ok(content.includes('toggleTheme'), 'Must support theme switcher toggle');
 });
