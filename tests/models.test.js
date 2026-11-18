@@ -79,4 +79,16 @@ test('Task schema validates required fields, status enum, and Kanban index', () 
         ([fields]) => fields.companyId === 1 && fields.projectId === 1 && fields.status === 1
     );
     assert.ok(hasKanbanIndex, 'Task must have compound index on { companyId: 1, projectId: 1, status: 1 }');
+
+    // Advanced: Task multi-assignee and comments schema validation
+    const taskWithComments = new Task({
+        companyId: new mongoose.Types.ObjectId(),
+        projectId: new mongoose.Types.ObjectId(),
+        title: 'Task With Chat',
+        assigneeIds: [new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId()],
+        comments: [{ text: 'Premier commentaire de test' }]
+    });
+    assert.strictEqual(taskWithComments.assigneeIds.length, 2);
+    assert.strictEqual(taskWithComments.comments.length, 1);
+    assert.strictEqual(taskWithComments.comments[0].text, 'Premier commentaire de test');
 });

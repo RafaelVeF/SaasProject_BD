@@ -28,10 +28,12 @@
 ### 3.1 CRUD Collaborateurs (Users)
 - **Création** : Ajout d'un membre rattaché à l'entreprise active avec Nom, Email professionnel, Rôle (ex. *CTO, Product Lead, DevSecOps*) et assignation automatique d'une couleur d'avatar unique.
 - **Consultation** : Visualisation de la liste des collaborateurs dans la barre latérale.
+- **Modification** : Bouton d'édition (✎) sur chaque profil pour mettre à jour son nom, son email ou son rôle métier.
 - **Suppression** : Retrait du collaborateur de l'entreprise avec désassignation automatique de ses tâches et suppression de sa présence dans les équipes projet.
 
 ### 3.2 CRUD Projets
 - **Création** : Création d'un espace projet avec un nom, une description et la sélection des membres d'équipe parmi les utilisateurs de l'entreprise.
+- **Modification** : Bouton d'édition (✎) sur chaque projet pour actualiser son nom, sa description ou réassigner son équipe de collaborateurs.
 - **Validation inter-tenant** : Tout utilisateur extérieur à l'entreprise est rejeté lors de l'assignation.
 - **Suppression en cascade** : La suppression d'un projet supprime l'ensemble de ses tâches associées.
 
@@ -64,8 +66,21 @@
 - **Filtre par membre assigné** : Affichage exclusif des tâches confiées à un collaborateur spécifique (ou vue globale *Tous les membres*).
 - **Filtre par priorité** : Affichage ciblé selon le degré d'urgence.
 
-### 4.5 Jeu de Données de Démonstration (Seed 1-Clic)
-- Un bouton d'action dédié (`⚡ Réinitialiser & Démo`) dans l'en-tête permet de générer en une seconde deux entreprises complètes, distinctes et réalistes :
+### 4.5 Multi-Assignation de Collaborateurs
+- Chaque tâche supporte l'assignation simultanée de plusieurs collaborateurs appartenant au projet.
+- Affichage visuel en cascade (*Avatar Stack*) sur les cartes Kanban et dans la vue détaillée.
+
+### 4.6 Fil de Discussion & Chat par Tâche
+- Chaque carte propose un bouton d'accès direct au fil de commentaires (`💬`).
+- Modale de discussion interactive permettant aux collaborateurs d'échanger des notes, retours d'avancement et blocages horodatés en direct.
+- Attribution automatique du message à l'utilisateur actif de la session.
+
+### 4.7 Vues Spécialisées : Tableau de Bord & Équipe Projet
+- **Tableau de Bord (Dashboard Analytics)** : KPI en temps réel (total des tâches, pourcentage d'avancement, tâches actives, répartition par priorité et charge de travail par collaborateur).
+- **Vue Équipe (Team View)** : Récapitulatif des membres du projet, compétences/rôles et volume de tâches attribuées.
+
+### 4.8 Jeu de Données de Démonstration (Seed 1-Clic)
+- Un bouton d'action dédié (`Réinitialiser & Démo`) dans l'en-tête permet de générer en une seconde deux entreprises complètes, distinctes et réalistes :
   1. **Nebula Tech (SaaS Cloud)** : Projet de sharding MongoDB avec tâches d'infrastructure et collaborateurs DevOps.
   2. **GreenSolar Collectif** : Projet solaire avec collaborateurs métier et tâches de télémétrie.
 - Ce jeu de test permet d'expérimenter immédiatement l'étanchéité du cloisonnement multi-tenant sans configuration manuelle.

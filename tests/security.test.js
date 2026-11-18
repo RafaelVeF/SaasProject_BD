@@ -28,3 +28,19 @@ test('API security: Invalid ObjectId params return HTTP 400 on DELETE', async ()
         server.close();
     }
 });
+
+test('API security: Invalid ObjectId params return HTTP 400 on PUT', async () => {
+    const server = app.listen(0);
+    const port = server.address().port;
+
+    try {
+        const res = await fetch(`http://127.0.0.1:${port}/api/companies/invalid-id`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: 'Test' })
+        });
+        assert.strictEqual(res.status, 400, 'Invalid company id parameter on PUT must return 400 Bad Request');
+    } finally {
+        server.close();
+    }
+});

@@ -49,31 +49,57 @@ router.post('/', async (req, res) => {
                 companyId: compA._id,
                 projectId: projA._id,
                 assigneeId: uA1._id,
+                assigneeIds: [uA1._id, uA2._id],
                 title: 'Définir la Shard Key {companyId: 1}',
                 description: 'Assurer la colocalisation des documents par entreprise sur le cluster',
                 status: 'DONE',
                 priority: 'CRITICAL',
-                tags: ['Database', 'MongoDB', 'Architecture']
+                tags: ['Database', 'MongoDB', 'Architecture'],
+                comments: [
+                    {
+                        userId: uA1._id,
+                        authorName: 'Sarah Connor',
+                        text: 'La shard key composite {companyId: 1, _id: 1} est validée pour la Partie II !',
+                        createdAt: new Date(Date.now() - 3600000 * 2)
+                    },
+                    {
+                        userId: uA2._id,
+                        authorName: 'Marc Levy',
+                        text: 'Super, j\'ai aligné les index composites sur cette spécification.',
+                        createdAt: new Date(Date.now() - 3600000)
+                    }
+                ]
             },
             {
                 companyId: compA._id,
                 projectId: projA._id,
                 assigneeId: uA2._id,
+                assigneeIds: [uA2._id],
                 title: 'Configurer le Docker Compose',
                 description: 'Intégrer les routeurs mongos et les config servers',
                 status: 'IN_PROGRESS',
                 priority: 'HIGH',
-                tags: ['DevOps', 'Docker']
+                tags: ['DevOps', 'Docker'],
+                comments: [
+                    {
+                        userId: uA2._id,
+                        authorName: 'Marc Levy',
+                        text: 'Images Alpine configurées et healthcheck opérationnel.',
+                        createdAt: new Date()
+                    }
+                ]
             },
             {
                 companyId: compA._id,
                 projectId: projA._id,
                 assigneeId: uA1._id,
+                assigneeIds: [uA1._id],
                 title: 'Tester le failover du Replica Set',
                 description: 'Simuler la panne du nœud primaire et valider la réélection',
                 status: 'TODO',
                 priority: 'MEDIUM',
-                tags: ['Testing', 'ReplicaSet']
+                tags: ['Testing', 'ReplicaSet'],
+                comments: []
             }
         ]);
 
@@ -103,21 +129,32 @@ router.post('/', async (req, res) => {
                 companyId: compB._id,
                 projectId: projB._id,
                 assigneeId: uB1._id,
+                assigneeIds: [uB1._id],
                 title: 'Valider les courbes de charge Enedis',
                 description: 'Intégration API de télémétrie des compteurs Linky',
                 status: 'IN_PROGRESS',
                 priority: 'HIGH',
-                tags: ['Energie', 'API']
+                tags: ['Energie', 'API'],
+                comments: [
+                    {
+                        userId: uB1._id,
+                        authorName: 'Elena Rostova',
+                        text: 'Parsing des flux JSON opérationnel.',
+                        createdAt: new Date()
+                    }
+                ]
             },
             {
                 companyId: compB._id,
                 projectId: projB._id,
                 assigneeId: uB1._id,
+                assigneeIds: [uB1._id],
                 title: 'Design du dashboard client',
                 description: 'Créer les graphiques de production en temps réel',
                 status: 'TODO',
                 priority: 'MEDIUM',
-                tags: ['UI', 'Frontend']
+                tags: ['UI', 'Frontend'],
+                comments: []
             }
         ]);
 

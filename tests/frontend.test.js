@@ -37,4 +37,15 @@ test('Frontend public/index.html exists and contains essential structure', () =>
     assert.ok(content.includes('ondragstart'), 'Must include ondragstart handler');
     assert.ok(content.includes('ondragover'), 'Must include ondragover handler');
     assert.ok(content.includes('ondrop'), 'Must include ondrop handler');
+
+    // Must have full CRUD operations (including edit)
+    assert.ok(content.includes('openEditCompanyModal'), 'Must support editing companies');
+    assert.ok(content.includes('openEditProjectModal'), 'Must support editing projects');
+    assert.ok(content.includes('openEditUserModal'), 'Must support editing users');
+
+    // Advanced Bonus: Task Chat/Comments & Multi-View Tabs
+    assert.ok(content.includes('openChatModal'), 'Must support task conversation / chat');
+    assert.ok(content.includes('switchView'), 'Must support tabbed views (Kanban, Dashboard, Team)');
+    assert.ok(content.includes('viewDashboardContainer'), 'Must include Dashboard analytics view');
+    assert.ok(content.includes('viewTeamContainer'), 'Must include Team member view');
 });

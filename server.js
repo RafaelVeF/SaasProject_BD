@@ -17,13 +17,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API Routes
-app.use('/api/companies', companiesRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/projects', projectsRouter);
-app.use('/api', tasksRouter);
-app.use('/api/seed', seedRouter);
-
 // Healthcheck route
 app.get('/api/health', (req, res) => {
     res.json({
@@ -31,6 +24,13 @@ app.get('/api/health', (req, res) => {
         database: mongoose.connection.readyState === 1 ? 'CONNECTED' : 'DISCONNECTED'
     });
 });
+
+// API Routes
+app.use('/api/companies', companiesRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/projects', projectsRouter);
+app.use('/api/seed', seedRouter);
+app.use('/api', tasksRouter);
 
 // Database connection & Server initialization
 const PORT = process.env.PORT || 3000;
