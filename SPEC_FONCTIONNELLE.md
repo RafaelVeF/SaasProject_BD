@@ -9,7 +9,12 @@
 
 ---
 
-## 2. Gestion Multi-Tenant & Isolation Logique
+## 2. Gestion Multi-Tenant & Authentification
+
+### 2.0 Module d'Authentification Effective & Changement de Compte
+- **Écran de Connexion & Inscription** : Interface d'accueil permettant à tout utilisateur de se connecter avec son email et mot de passe, ou de créer un nouveau compte avec création de son entreprise (tenant) dédiée.
+- **Accès Démo 1-Clic** : Boutons d'accès direct pour tester instantanément l'application sous l'identité de *Sarah Connor (Nebula Tech)* ou d'*Elena Rostova (GreenSolar)* sans saisie manuelle.
+- **Gestion de Session & Déconnexion** : Mémorisation locale sécurisée de la session (`localStorage`), bouton de déconnexion immédiate et sélecteur de changement de compte à la volée.
 
 ### 2.1 Sélecteur d'Espace de Travail (*Workspace / Tenant Switcher*)
 - Un sélecteur en en-tête permet à l'utilisateur de basculer instantanément entre les entreprises enregistrées.
@@ -84,3 +89,8 @@
   1. **Nebula Tech (SaaS Cloud)** : Projet de sharding MongoDB avec tâches d'infrastructure et collaborateurs DevOps.
   2. **GreenSolar Collectif** : Projet solaire avec collaborateurs métier et tâches de télémétrie.
 - Ce jeu de test permet d'expérimenter immédiatement l'étanchéité du cloisonnement multi-tenant sans configuration manuelle.
+
+### 4.9 Switcher de Thème (Noir Anthracite & Bleu Nuit vs Blanc & Bleu Clair)
+- **Thème Sombre par défaut** : Nuances de noir anthracite profond, cartes bleu nuit ardoisé, typographie blanc cassé et accents bleu électrique.
+- **Thème Clair** : Nuances de blanc cassé, cartes blanches épurées, typographie ardoise et accents bleu royal.
+- **Bouton d'Inversion & Persistance** : Icône vectorielle Soleil/Lune dans l'en-tête mémorisant automatiquement le choix de l'utilisateur.

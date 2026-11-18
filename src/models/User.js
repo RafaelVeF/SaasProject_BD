@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema({
         default: 'Membre',
         trim: true
     },
+    password: {
+        type: String,
+        default: () => require('../utils/auth').hashPassword('password123'),
+        select: false
+    },
     avatarColor: {
         type: String,
         default: '#6366f1'

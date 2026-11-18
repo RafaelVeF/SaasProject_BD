@@ -9,6 +9,7 @@ const usersRouter = require('./src/routes/users');
 const projectsRouter = require('./src/routes/projects');
 const tasksRouter = require('./src/routes/tasks');
 const seedRouter = require('./src/routes/seed');
+const authRouter = require('./src/routes/auth');
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/auth', authRouter);
 app.use('/api/companies', companiesRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/projects', projectsRouter);

@@ -1,245 +1,354 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexusFlow SaaS – Gestion de Projet Multi-Tenant</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        anthracite: {
+                            950: '#060913',
+                            900: '#0a0f1d',
+                            850: '#0f172a',
+                            800: '#141e33',
+                            700: '#1e293b',
+                            600: '#334155'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         .kanban-col { min-height: 62vh; }
         .dragging { opacity: 0.35; transform: scale(0.98); }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
-        ::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.6); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.8); }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.4); }
+        ::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.5); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.7); }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+<body class="bg-slate-100 text-slate-800 dark:bg-anthracite-950 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white transition-colors duration-200">
 
-    <!-- BARRE SUPÉRIEURE : ISOLATION TENANT & PROFIL CONNECTÉ -->
-    <header class="bg-slate-800/90 backdrop-blur border-b border-slate-700 px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-40">
-        <div class="flex items-center gap-3">
-            <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black px-3 py-1.5 rounded-lg shadow-md tracking-wider">
-                NF
-            </div>
-            <div>
-                <h1 class="font-bold text-lg leading-tight flex items-center gap-2">
-                    NexusFlow
-                    <span class="text-[10px] uppercase font-semibold tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">
-                        SaaS Multi-Tenant
-                    </span>
-                </h1>
-                <p class="text-xs text-slate-400">
-                    Isolation stricte par <code class="text-indigo-400 font-mono font-semibold">X-Company-Id</code>
-                </p>
-            </div>
-        </div>
-
-        <!-- SÉLECTEUR TENANT & CRUD ENTREPRISE -->
-        <div class="flex items-center flex-wrap gap-2.5">
-            <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-700">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <label for="companySelect" class="text-xs uppercase tracking-wider text-slate-400 font-semibold">
-                    Entreprise :
-                </label>
-                <select id="companySelect" onchange="switchCompany(this.value)" class="bg-transparent text-sm font-medium text-slate-200 outline-none cursor-pointer">
-                    <!-- Options injectées dynamiquement -->
-                </select>
-            </div>
-
-            <button onclick="openCompanyModal()" class="bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold px-3 py-2 rounded-lg transition shadow flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                <span>Entreprise</span>
-            </button>
-            <button onclick="openEditCompanyModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold px-2.5 py-2 rounded-lg transition flex items-center gap-1.5" title="Modifier l'entreprise active">
-                <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                <span>Modifier</span>
-            </button>
-            <button onclick="deleteCurrentCompany()" class="bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 text-xs font-semibold px-2.5 py-2 rounded-lg transition flex items-center gap-1.5" title="Supprimer l'entreprise active">
-                <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                <span>Supprimer</span>
-            </button>
-            <button onclick="seedDemoData()" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                <span>Réinitialiser & Démo</span>
-            </button>
-
-            <!-- PROFIL UTILISATEUR CONNECTÉ SIMULÉ -->
-            <div class="flex items-center gap-2 border-l border-slate-700 pl-3 ml-1">
-                <div id="currentUserAvatar" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow bg-indigo-600">
-                    ?
+    <!-- ========================================== -->
+    <!-- ÉCRAN D'AUTHENTIFICATION (LOGIN / REGISTER) -->
+    <!-- ========================================== -->
+    <div id="authView" class="hidden min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-anthracite-950 dark:via-anthracite-900 dark:to-blue-950/40">
+        <div class="max-w-md w-full bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700/80 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
+            <!-- Logo & En-tête -->
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xl shadow-lg shadow-blue-500/20 mb-3">
+                    NF
                 </div>
-                <div class="text-left hidden sm:block">
-                    <div id="currentUserName" class="text-xs font-bold text-slate-200 leading-tight">Collaborateur</div>
-                    <select id="userSessionSelect" onchange="switchCurrentUser(this.value)" class="text-[11px] bg-transparent text-slate-400 outline-none cursor-pointer hover:text-indigo-300">
-                        <!-- Options collaborateurs injectées -->
-                    </select>
-                </div>
-                <button onclick="openProfileModal()" class="text-slate-300 hover:text-white text-xs bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5" title="Mon Profil">
-                    <svg class="w-3.5 h-3.5 inline text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    <span>Profil</span>
+                <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">NexusFlow SaaS</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Plateforme Multi-Tenant Kanban & Collaboration</p>
+            </div>
+
+            <!-- Onglets Connexion / Inscription -->
+            <div class="flex p-1 bg-slate-100 dark:bg-anthracite-900 rounded-xl mb-6 border border-slate-200 dark:border-anthracite-700">
+                <button id="authTabLogin" onclick="switchAuthTab('login')" class="flex-1 text-xs font-bold py-2 rounded-lg bg-white dark:bg-blue-600 text-slate-900 dark:text-white shadow transition">
+                    Se Connecter
+                </button>
+                <button id="authTabRegister" onclick="switchAuthTab('register')" class="flex-1 text-xs font-bold py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition">
+                    Créer un Compte
                 </button>
             </div>
-        </div>
-    </header>
 
-    <!-- CONTENU PRINCIPAL -->
-    <div class="flex-1 flex overflow-hidden">
-
-        <!-- BARRE LATÉRALE : PROJETS & COLLABORATEURS -->
-        <aside class="w-80 bg-slate-800/50 border-r border-slate-700 p-5 flex flex-col gap-6 overflow-y-auto">
-            <!-- Section Projets -->
-            <div>
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Projets de l'entreprise</h2>
-                    <button onclick="openProjectModal()" class="text-xs bg-slate-700 hover:bg-slate-600 px-2.5 py-1 rounded text-slate-200 transition font-medium">
-                        + Projet
-                    </button>
-                </div>
-                <div id="projectList" class="space-y-2">
-                    <!-- Injecté dynamiquement -->
-                </div>
-            </div>
-
-            <hr class="border-slate-700/80">
-
-            <!-- Section Collaborateurs -->
-            <div>
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Collaborateurs (Tenant)</h2>
-                    <button onclick="openUserModal()" class="text-xs bg-slate-700 hover:bg-slate-600 px-2.5 py-1 rounded text-slate-200 transition font-medium">
-                        + Membre
-                    </button>
-                </div>
-                <div id="userList" class="space-y-2">
-                    <!-- Injecté dynamiquement -->
-                </div>
-            </div>
-        </aside>
-
-        <!-- ZONE CENTRALE : NAVIGATION PAR ONGLETS & VUES -->
-        <main class="flex-1 p-6 overflow-x-auto flex flex-col bg-slate-900">
-            <!-- En-tête de Projet & Barre d'onglets -->
-            <div id="projectHeader" class="flex flex-wrap justify-between items-center gap-4 mb-5 pb-4 border-b border-slate-800">
+            <!-- Formulaire Connexion -->
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <h2 id="activeProjectTitle" class="text-2xl font-bold text-white tracking-tight">
-                        Sélectionnez ou créez un projet
-                    </h2>
-                    <p id="activeProjectDesc" class="text-sm text-slate-400 mt-0.5"></p>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email professionnel</label>
+                    <input id="loginEmail" type="email" required placeholder="sarah@nebula.io" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-600 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition">
                 </div>
-
-                <!-- Navigation par onglets -->
-                <div id="viewTabs" class="hidden flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
-                    <button id="tabKanban" onclick="switchView('kanban')" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition flex items-center gap-1.5 shadow">
-                        <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
-                        <span>Kanban</span>
-                    </button>
-                    <button id="tabDashboard" onclick="switchView('dashboard')" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                        <span>Tableau de bord</span>
-                    </button>
-                    <button id="tabTeam" onclick="switchView('team')" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                        <span>Équipe</span>
-                    </button>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mot de passe</label>
+                    <input id="loginPassword" type="password" required value="password123" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-600 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition">
                 </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition shadow-lg shadow-blue-600/25">
+                    Accéder à mon espace
+                </button>
+            </form>
 
-                <!-- Filtres et actions Kanban -->
-                <div id="kanbanControls" class="hidden flex items-center gap-2.5 flex-wrap">
-                    <select id="filterAssignee" onchange="renderKanban()" class="bg-slate-800 border border-slate-700 text-xs px-3 py-2 rounded-lg text-slate-300 outline-none">
-                        <option value="">Tous les membres</option>
-                    </select>
-                    <select id="filterPriority" onchange="renderKanban()" class="bg-slate-800 border border-slate-700 text-xs px-3 py-2 rounded-lg text-slate-300 outline-none">
-                        <option value="">Toutes les priorités</option>
-                        <option value="CRITICAL">Critique</option>
-                        <option value="HIGH">Haute</option>
-                        <option value="MEDIUM">Moyenne</option>
-                        <option value="LOW">Basse</option>
-                    </select>
-                    <button onclick="openTaskModal()" class="bg-indigo-600 hover:bg-indigo-500 text-sm font-semibold px-4 py-2 rounded-lg transition shadow flex items-center gap-1.5">
-                        <span>+</span> Nouvelle Tâche
+            <!-- Formulaire Inscription -->
+            <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-3.5 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom complet</label>
+                    <input id="regName" type="text" required placeholder="Alex Dupont" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email professionnel</label>
+                    <input id="regEmail" type="email" required placeholder="alex@startup.io" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Mot de passe</label>
+                    <input id="regPassword" type="password" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom de votre entreprise (Tenant)</label>
+                    <input id="regCompany" type="text" required placeholder="Nova Innovations" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition">
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition shadow-lg shadow-blue-600/25 mt-2">
+                    Créer mon organisation
+                </button>
+            </form>
+
+            <!-- Accès rapide Démo 1-Clic pour le correcteur -->
+            <div class="mt-6 pt-5 border-t border-slate-200 dark:border-anthracite-700/80">
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 text-center mb-3">
+                    Accès Démo Immédiat (1-Clic)
+                </p>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="loginAsDemo('sarah@nebula.io')" class="p-2.5 text-left rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-anthracite-900 dark:hover:bg-anthracite-800 border border-slate-200 dark:border-anthracite-700 transition">
+                        <div class="text-xs font-bold text-slate-900 dark:text-white truncate">Sarah Connor</div>
+                        <div class="text-[10px] text-blue-600 dark:text-blue-400 truncate">Nebula Tech (CTO)</div>
+                    </button>
+                    <button onclick="loginAsDemo('elena@greensolar.fr')" class="p-2.5 text-left rounded-xl bg-slate-50 hover:bg-emerald-50 dark:bg-anthracite-900 dark:hover:bg-anthracite-800 border border-slate-200 dark:border-anthracite-700 transition">
+                        <div class="text-xs font-bold text-slate-900 dark:text-white truncate">Elena Rostova</div>
+                        <div class="text-[10px] text-emerald-600 dark:text-emerald-400 truncate">GreenSolar (Lead)</div>
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- VUE 1 : TABLEAU KANBAN -->
-            <div id="viewKanbanContainer" class="flex-1 flex flex-col">
-                <div id="kanbanBoard" class="grid grid-cols-1 md:grid-cols-4 gap-5 flex-1 min-h-[58vh]">
-                    <!-- Colonnes générées dynamiquement -->
+    <!-- ========================================== -->
+    <!-- APPLICATION PRINCIPALE (WORKSPACE SAAS) -->
+    <!-- ========================================== -->
+    <div id="appView" class="flex-1 flex flex-col min-h-screen">
+
+        <!-- BARRE SUPÉRIEURE : EN-TÊTE & SWITCHER DE THÈME -->
+        <header class="bg-white/95 dark:bg-anthracite-900/90 backdrop-blur border-b border-slate-200 dark:border-anthracite-700/80 px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-40 transition-colors">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black px-3 py-1.5 rounded-xl shadow-md tracking-wider">
+                    NF
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight flex items-center gap-2 text-slate-900 dark:text-white">
+                        NexusFlow
+                        <span class="text-[10px] uppercase font-semibold tracking-wider bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 px-2 py-0.5 rounded-full">
+                            SaaS Multi-Tenant
+                        </span>
+                    </h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        Isolation stricte par <code class="text-blue-600 dark:text-blue-400 font-mono font-semibold">X-Company-Id</code>
+                    </p>
                 </div>
             </div>
 
-            <!-- VUE 2 : TABLEAU DE BORD (DASHBOARD & KPI) -->
-            <div id="viewDashboardContainer" class="hidden flex-1 flex-col gap-6">
-                <!-- Cartes KPI -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-slate-800/60 border border-slate-700/80 p-5 rounded-2xl shadow">
-                        <div class="text-xs uppercase font-bold text-slate-400">Total des Tâches</div>
-                        <div id="kpiTotal" class="text-3xl font-black text-white mt-2">0</div>
-                        <div class="text-[11px] text-slate-500 mt-1">Au sein du projet actif</div>
+            <!-- ACTIONS TENANT, THÈME & COMPTE -->
+            <div class="flex items-center flex-wrap gap-2.5">
+                <!-- Sélecteur Entreprise -->
+                <div class="flex items-center gap-2 bg-slate-50 dark:bg-anthracite-950 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-anthracite-700">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <label for="companySelect" class="text-xs uppercase tracking-wider text-slate-400 font-semibold">
+                        Entreprise :
+                    </label>
+                    <select id="companySelect" onchange="switchCompany(this.value)" class="bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
+                        <!-- Options injectées -->
+                    </select>
+                </div>
+
+                <button onclick="openCompanyModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-2 rounded-xl transition shadow flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span>Entreprise</span>
+                </button>
+                <button onclick="openEditCompanyModal()" class="bg-slate-100 hover:bg-slate-200 dark:bg-anthracite-800 dark:hover:bg-anthracite-700 text-slate-700 dark:text-slate-200 text-xs font-semibold px-2.5 py-2 rounded-xl transition flex items-center gap-1.5 border border-slate-200 dark:border-anthracite-700" title="Modifier l'entreprise active">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    <span>Modifier</span>
+                </button>
+                <button onclick="deleteCurrentCompany()" class="bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 text-xs font-semibold px-2.5 py-2 rounded-xl transition flex items-center gap-1.5" title="Supprimer l'entreprise active">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>Supprimer</span>
+                </button>
+                <button onclick="seedDemoData()" class="bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <span>Réinitialiser & Démo</span>
+                </button>
+
+                <!-- SWITCHER DE THÈME (SOMBRE ANTHRACITE VS CLAIR BLANC/BLEU) -->
+                <button onclick="toggleTheme()" id="themeToggleBtn" class="p-2 rounded-xl bg-slate-100 dark:bg-anthracite-800 border border-slate-200 dark:border-anthracite-700 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition" title="Basculer le thème">
+                    <!-- Icone Soleil pour mode sombre, Lune pour mode clair -->
+                    <svg id="themeIconSun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg id="themeIconMoon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+
+                <!-- PROFIL UTILISATEUR & CHANGEMENT DE COMPTE -->
+                <div class="flex items-center gap-2 border-l border-slate-200 dark:border-anthracite-700 pl-3 ml-1">
+                    <div id="currentUserAvatar" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow bg-blue-600">
+                        ?
                     </div>
-                    <div class="bg-slate-800/60 border border-slate-700/80 p-5 rounded-2xl shadow">
-                        <div class="text-xs uppercase font-bold text-emerald-400">Terminées</div>
-                        <div id="kpiDone" class="text-3xl font-black text-emerald-300 mt-2">0</div>
-                        <div id="kpiDonePercent" class="text-[11px] text-emerald-500 font-medium mt-1">0% de complétion</div>
+                    <div class="text-left hidden md:block">
+                        <div id="currentUserName" class="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight">Collaborateur</div>
+                        <select id="userSessionSelect" onchange="switchCurrentUser(this.value)" class="text-[11px] bg-transparent text-slate-500 dark:text-slate-400 outline-none cursor-pointer hover:text-blue-600">
+                            <!-- Options collaborateurs injectées -->
+                        </select>
                     </div>
-                    <div class="bg-slate-800/60 border border-slate-700/80 p-5 rounded-2xl shadow">
-                        <div class="text-xs uppercase font-bold text-blue-400">En cours & Revue</div>
-                        <div id="kpiActive" class="text-3xl font-black text-blue-300 mt-2">0</div>
-                        <div class="text-[11px] text-slate-500 mt-1">Tâches en flux actif</div>
+                    <button onclick="openProfileModal()" class="text-slate-600 dark:text-slate-300 hover:text-blue-600 text-xs bg-slate-100 dark:bg-anthracite-800 border border-slate-200 dark:border-anthracite-700 px-2 py-1.5 rounded-xl transition" title="Mon Profil">
+                        <svg class="w-3.5 h-3.5 inline text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </button>
+                    <button onclick="logout()" class="text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 text-xs bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 px-2.5 py-1.5 rounded-xl transition font-medium" title="Se déconnecter">
+                        Déconnexion
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- CORPS PRINCIPAL DE L'APPLICATION -->
+        <div class="flex-1 flex overflow-hidden">
+
+            <!-- BARRE LATÉRALE : PROJETS & COLLABORATEURS -->
+            <aside class="w-80 bg-white/60 dark:bg-anthracite-900/40 border-r border-slate-200 dark:border-anthracite-700/80 p-5 flex flex-col gap-6 overflow-y-auto">
+                <!-- Section Projets -->
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">Projets de l'entreprise</h2>
+                        <button onclick="openProjectModal()" class="text-xs bg-slate-100 hover:bg-slate-200 dark:bg-anthracite-800 dark:hover:bg-anthracite-700 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-200 transition font-medium border border-slate-200 dark:border-anthracite-700">
+                            + Projet
+                        </button>
                     </div>
-                    <div class="bg-slate-800/60 border border-slate-700/80 p-5 rounded-2xl shadow">
-                        <div class="text-xs uppercase font-bold text-rose-400">Priorité Critique</div>
-                        <div id="kpiCritical" class="text-3xl font-black text-rose-300 mt-2">0</div>
-                        <div class="text-[11px] text-slate-500 mt-1">Nécessitent une action rapide</div>
+                    <div id="projectList" class="space-y-2">
+                        <!-- Injecté dynamiquement -->
                     </div>
                 </div>
 
-                <!-- Graphiques / Répartitions visuelles -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 shadow">
-                        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                            <svg class="w-4 h-4 inline text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span>Répartition par Niveau de Priorité</span>
-                        </h3>
-                        <div id="priorityBars" class="space-y-3.5">
-                            <!-- Barres générées -->
+                <hr class="border-slate-200 dark:border-anthracite-700/80">
+
+                <!-- Section Collaborateurs -->
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">Collaborateurs (Tenant)</h2>
+                        <button onclick="openUserModal()" class="text-xs bg-slate-100 hover:bg-slate-200 dark:bg-anthracite-800 dark:hover:bg-anthracite-700 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-200 transition font-medium border border-slate-200 dark:border-anthracite-700">
+                            + Membre
+                        </button>
+                    </div>
+                    <div id="userList" class="space-y-2">
+                        <!-- Injecté dynamiquement -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ZONE CENTRALE : NAVIGATION PAR ONGLETS & VUES -->
+            <main class="flex-1 p-6 overflow-x-auto flex flex-col bg-slate-50 dark:bg-anthracite-950">
+                <!-- En-tête de Projet & Barre d'onglets -->
+                <div id="projectHeader" class="flex flex-wrap justify-between items-center gap-4 mb-5 pb-4 border-b border-slate-200 dark:border-anthracite-800">
+                    <div>
+                        <h2 id="activeProjectTitle" class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                            Sélectionnez ou créez un projet
+                        </h2>
+                        <p id="activeProjectDesc" class="text-sm text-slate-500 dark:text-slate-400 mt-0.5"></p>
+                    </div>
+
+                    <!-- Navigation par onglets -->
+                    <div id="viewTabs" class="hidden flex items-center bg-slate-200/80 dark:bg-anthracite-850 p-1 rounded-2xl border border-slate-300 dark:border-anthracite-700">
+                        <button id="tabKanban" onclick="switchView('kanban')" class="text-xs font-bold px-4 py-2 rounded-xl bg-blue-600 text-white transition flex items-center gap-1.5 shadow">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+                            <span>Kanban</span>
+                        </button>
+                        <button id="tabDashboard" onclick="switchView('dashboard')" class="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            <span>Tableau de bord</span>
+                        </button>
+                        <button id="tabTeam" onclick="switchView('team')" class="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                            <span>Équipe</span>
+                        </button>
+                    </div>
+
+                    <!-- Filtres et actions Kanban -->
+                    <div id="kanbanControls" class="hidden flex items-center gap-2.5 flex-wrap">
+                        <select id="filterAssignee" onchange="renderKanban()" class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 text-xs px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 outline-none">
+                            <option value="">Tous les membres</option>
+                        </select>
+                        <select id="filterPriority" onchange="renderKanban()" class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 text-xs px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 outline-none">
+                            <option value="">Toutes les priorités</option>
+                            <option value="CRITICAL">Critique</option>
+                            <option value="HIGH">Haute</option>
+                            <option value="MEDIUM">Moyenne</option>
+                            <option value="LOW">Basse</option>
+                        </select>
+                        <button onclick="openTaskModal()" class="bg-blue-600 hover:bg-blue-500 text-sm font-bold text-white px-4 py-2 rounded-xl transition shadow-md shadow-blue-500/20 flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            <span>Nouvelle Tâche</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- VUE 1 : TABLEAU KANBAN -->
+                <div id="viewKanbanContainer" class="flex-1 flex flex-col">
+                    <div id="kanbanBoard" class="grid grid-cols-1 md:grid-cols-4 gap-5 flex-1 min-h-[58vh]">
+                        <!-- Colonnes injectées -->
+                    </div>
+                </div>
+
+                <!-- VUE 2 : TABLEAU DE BORD (DASHBOARD) -->
+                <div id="viewDashboardContainer" class="hidden flex-1 flex-col gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 p-5 rounded-3xl shadow-sm">
+                            <div class="text-xs uppercase font-bold text-slate-400">Total des Tâches</div>
+                            <div id="kpiTotal" class="text-3xl font-black text-slate-900 dark:text-white mt-2">0</div>
+                            <div class="text-[11px] text-slate-500 mt-1">Au sein du projet actif</div>
+                        </div>
+                        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 p-5 rounded-3xl shadow-sm">
+                            <div class="text-xs uppercase font-bold text-emerald-600 dark:text-emerald-400">Terminées</div>
+                            <div id="kpiDone" class="text-3xl font-black text-emerald-600 dark:text-emerald-300 mt-2">0</div>
+                            <div id="kpiDonePercent" class="text-[11px] text-emerald-600 dark:text-emerald-500 font-semibold mt-1">0% de complétion</div>
+                        </div>
+                        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 p-5 rounded-3xl shadow-sm">
+                            <div class="text-xs uppercase font-bold text-blue-600 dark:text-blue-400">En cours & Revue</div>
+                            <div id="kpiActive" class="text-3xl font-black text-blue-600 dark:text-blue-300 mt-2">0</div>
+                            <div class="text-[11px] text-slate-500 mt-1">Tâches en flux actif</div>
+                        </div>
+                        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 p-5 rounded-3xl shadow-sm">
+                            <div class="text-xs uppercase font-bold text-rose-600 dark:text-rose-400">Priorité Critique</div>
+                            <div id="kpiCritical" class="text-3xl font-black text-rose-600 dark:text-rose-300 mt-2">0</div>
+                            <div class="text-[11px] text-slate-500 mt-1">Nécessitent une action rapide</div>
                         </div>
                     </div>
 
-                    <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 shadow">
-                        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                            <svg class="w-4 h-4 inline text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                            <span>Charge de Travail par Collaborateur</span>
-                        </h3>
-                        <div id="workloadBars" class="space-y-3.5">
-                            <!-- Barres générées -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-3xl p-6 shadow-sm">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Répartition par Niveau de Priorité</span>
+                            </h3>
+                            <div id="priorityBars" class="space-y-3.5"></div>
+                        </div>
+
+                        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-3xl p-6 shadow-sm">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                <span>Charge de Travail par Collaborateur</span>
+                            </h3>
+                            <div id="workloadBars" class="space-y-3.5"></div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- VUE 3 : ÉQUIPE DU PROJET (TEAM VIEW) -->
-            <div id="viewTeamContainer" class="hidden flex-1 flex-col gap-4">
-                <div class="flex justify-between items-center mb-2">
-                    <p class="text-xs text-slate-400">Membres affectés à ce projet et charge de travail respective.</p>
-                    <button onclick="openEditProjectModal(currentProject._id)" class="text-xs bg-indigo-600 hover:bg-indigo-500 font-semibold px-3 py-1.5 rounded-lg transition text-white">
-                        + Gérer l'équipe du projet
-                    </button>
+                <!-- VUE 3 : ÉQUIPE DU PROJET (TEAM) -->
+                <div id="viewTeamContainer" class="hidden flex-1 flex-col gap-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Membres affectés à ce projet et répartition opérationnelle.</p>
+                        <button onclick="openEditProjectModal(currentProject._id)" class="text-xs bg-blue-600 hover:bg-blue-500 font-semibold px-3.5 py-2 rounded-xl transition text-white shadow">
+                            + Gérer l'équipe du projet
+                        </button>
+                    </div>
+                    <div id="teamMemberList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
-                <div id="teamMemberList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Cartes membres générées -->
-                </div>
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
 
     <!-- MODALE GÉNÉRIQUE -->
-    <div id="modalOverlay" class="fixed inset-0 bg-black/75 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+    <div id="modalOverlay" class="fixed inset-0 bg-black/60 dark:bg-black/80 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-3xl max-w-md w-full p-6 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 id="modalTitle" class="text-lg font-bold text-white"></h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700/60 transition" title="Fermer">
+                <h3 id="modalTitle" class="text-lg font-black text-slate-900 dark:text-white"></h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-anthracite-700 transition" title="Fermer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -247,36 +356,38 @@
         </div>
     </div>
 
-    <!-- PANNEAU LATÉRAL / MODALE DE DISCUSSION (CHAT PAR TÂCHE) -->
-    <div id="chatModalOverlay" class="fixed inset-0 bg-black/75 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-xl w-full flex flex-col max-h-[85vh] shadow-2xl overflow-hidden">
-            <div class="p-5 border-b border-slate-700 flex justify-between items-start">
+    <!-- MODALE DE DISCUSSION / CHAT DE TÂCHE -->
+    <div id="chatModalOverlay" class="fixed inset-0 bg-black/60 dark:bg-black/80 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-3xl max-w-xl w-full flex flex-col max-h-[85vh] shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-slate-200 dark:border-anthracite-700 flex justify-between items-start">
                 <div>
                     <div id="chatTaskPriority" class="inline-block text-[10px] px-2 py-0.5 rounded uppercase font-semibold mb-1"></div>
-                    <h3 id="chatTaskTitle" class="text-base font-bold text-white"></h3>
-                    <p id="chatTaskDesc" class="text-xs text-slate-400 mt-0.5"></p>
+                    <h3 id="chatTaskTitle" class="text-base font-bold text-slate-900 dark:text-white"></h3>
+                    <p id="chatTaskDesc" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"></p>
                 </div>
-                <button onclick="closeChatModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700/60 transition" title="Fermer">
+                <button onclick="closeChatModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-anthracite-700 transition" title="Fermer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
             <!-- Liste des messages -->
-            <div id="chatMessageList" class="flex-1 p-5 overflow-y-auto space-y-3.5 bg-slate-900/60 min-h-[240px]">
-                <!-- Messages injectés dynamiquement -->
-            </div>
+            <div id="chatMessageList" class="flex-1 p-5 overflow-y-auto space-y-3.5 bg-slate-50 dark:bg-anthracite-950/60 min-h-[240px]"></div>
 
             <!-- Formulaire d'envoi -->
-            <form id="chatForm" onsubmit="sendComment(event)" class="p-4 border-t border-slate-700 bg-slate-800 flex gap-2">
-                <input id="chatInput" type="text" placeholder="Ajouter un commentaire ou une note sur cette tâche..." required class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-indigo-500">
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold px-4 py-2.5 rounded-xl transition text-white shadow">
+            <form id="chatForm" onsubmit="sendComment(event)" class="p-4 border-t border-slate-200 dark:border-anthracite-700 bg-white dark:bg-anthracite-850 flex gap-2">
+                <input id="chatInput" type="text" placeholder="Ajouter une note ou un commentaire sur cette tâche..." required class="flex-1 bg-slate-100 dark:bg-anthracite-900 border border-slate-200 dark:border-anthracite-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-xs font-bold px-4 py-2.5 rounded-xl transition text-white shadow">
                     Envoyer
                 </button>
             </form>
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- LOGIQUE JAVASCRIPT & ÉTATS DE L'APPLICATION -->
+    <!-- ========================================== -->
     <script>
+        let currentUserSession = null;
         let companies = [];
         let currentCompanyId = null;
         let users = [];
@@ -288,24 +399,42 @@
         let activeChatTaskId = null;
 
         const COLUMNS = [
-            { id: 'TODO', label: 'À faire', badge: 'bg-slate-500' },
+            { id: 'TODO', label: 'À faire', badge: 'bg-slate-400 dark:bg-slate-500' },
             { id: 'IN_PROGRESS', label: 'En cours', badge: 'bg-blue-500' },
             { id: 'REVIEW', label: 'En revue', badge: 'bg-amber-500' },
             { id: 'DONE', label: 'Terminé', badge: 'bg-emerald-500' }
         ];
 
         const PRIORITY_STYLE = {
-            LOW: 'bg-slate-800 text-slate-300 border border-slate-700',
-            MEDIUM: 'bg-blue-500/15 text-blue-300 border border-blue-500/30',
-            HIGH: 'bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium',
-            CRITICAL: 'bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold animate-pulse'
+            LOW: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700',
+            MEDIUM: 'bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30',
+            HIGH: 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 font-medium',
+            CRITICAL: 'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/40 font-bold animate-pulse'
         };
 
-        // Client API avec en-tête d'isolation X-Company-Id
+        // GESTION DU THÈME CLAIR / SOMBRE
+        function initTheme() {
+            const saved = localStorage.getItem('nexusflow_theme');
+            if (saved === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('nexusflow_theme', isDark ? 'dark' : 'light');
+        }
+
+        // WRAPPER API MULTI-TENANT
         async function api(url, options = {}) {
             const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
             if (currentCompanyId) {
                 headers['X-Company-Id'] = currentCompanyId;
+            }
+            if (currentUserId) {
+                headers['X-User-Id'] = currentUserId;
             }
             const res = await fetch(url, { ...options, headers });
             if (!res.ok) {
@@ -316,20 +445,150 @@
             return res.json();
         }
 
+        // INITIALISATION DE L'APPLICATION
         async function init() {
-            try {
-                companies = await api('/api/companies');
-                if (companies.length === 0) {
-                    await seedDemoData(false);
+            initTheme();
+            const stored = localStorage.getItem('nexusflow_auth');
+            if (stored) {
+                try {
+                    currentUserSession = JSON.parse(stored);
+                    currentCompanyId = currentUserSession.companyId;
+                    currentUserId = currentUserSession.userId;
+                    await enterApp();
                     return;
+                } catch {
+                    localStorage.removeItem('nexusflow_auth');
                 }
-                renderCompanySelect();
-                await switchCompany(companies[0]._id);
-            } catch (e) {
-                console.error("Erreur d'initialisation :", e);
+            }
+            showAuthView();
+        }
+
+        function showAuthView() {
+            document.getElementById('authView').classList.remove('hidden');
+            document.getElementById('appView').classList.add('hidden');
+        }
+
+        async function enterApp() {
+            document.getElementById('authView').classList.add('hidden');
+            document.getElementById('appView').classList.remove('hidden');
+
+            companies = await api('/api/companies');
+            if (companies.length === 0) {
+                await seedDemoData(false);
+                return;
+            }
+
+            if (!currentCompanyId || !companies.some(c => c._id === currentCompanyId)) {
+                currentCompanyId = companies[0]._id;
+            }
+
+            renderCompanySelect();
+            await switchCompany(currentCompanyId);
+        }
+
+        // AUTHENTIFICATION : ONGLETS & ACTIONS
+        function switchAuthTab(tab) {
+            const isLogin = tab === 'login';
+            document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+            document.getElementById('registerForm').classList.toggle('hidden', isLogin);
+
+            const btnLogin = document.getElementById('authTabLogin');
+            const btnReg = document.getElementById('authTabRegister');
+
+            if (isLogin) {
+                btnLogin.className = "flex-1 text-xs font-bold py-2 rounded-lg bg-white dark:bg-blue-600 text-slate-900 dark:text-white shadow transition";
+                btnReg.className = "flex-1 text-xs font-bold py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition";
+            } else {
+                btnReg.className = "flex-1 text-xs font-bold py-2 rounded-lg bg-white dark:bg-blue-600 text-slate-900 dark:text-white shadow transition";
+                btnLogin.className = "flex-1 text-xs font-bold py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition";
             }
         }
 
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const res = await api('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+
+                currentUserSession = {
+                    userId: res.user._id,
+                    companyId: res.company._id,
+                    name: res.user.name,
+                    email: res.user.email
+                };
+                localStorage.setItem('nexusflow_auth', JSON.stringify(currentUserSession));
+                currentUserId = res.user._id;
+                currentCompanyId = res.company._id;
+                await enterApp();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const companyName = document.getElementById('regCompany').value.trim();
+
+            try {
+                const res = await api('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ name, email, password, companyName })
+                });
+
+                currentUserSession = {
+                    userId: res.user._id,
+                    companyId: res.company._id,
+                    name: res.user.name,
+                    email: res.user.email
+                };
+                localStorage.setItem('nexusflow_auth', JSON.stringify(currentUserSession));
+                currentUserId = res.user._id;
+                currentCompanyId = res.company._id;
+                await enterApp();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loginAsDemo(demoEmail) {
+            try {
+                const res = await api('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: demoEmail, password: 'password123' })
+                });
+
+                currentUserSession = {
+                    userId: res.user._id,
+                    companyId: res.company._id,
+                    name: res.user.name,
+                    email: res.user.email
+                };
+                localStorage.setItem('nexusflow_auth', JSON.stringify(currentUserSession));
+                currentUserId = res.user._id;
+                currentCompanyId = res.company._id;
+                await enterApp();
+            } catch {
+                await seedDemoData(false);
+                await loginAsDemo(demoEmail);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('nexusflow_auth');
+            currentUserSession = null;
+            currentUserId = null;
+            showAuthView();
+        }
+
+        // GESTION DU WORKSPACE TENANT
         function renderCompanySelect() {
             const sel = document.getElementById('companySelect');
             sel.innerHTML = companies.map(c => `
@@ -363,21 +622,21 @@
                 container.innerHTML = `<p class="text-xs text-slate-500 italic">Aucun collaborateur dans cette entreprise.</p>`;
             } else {
                 container.innerHTML = users.map(u => `
-                    <div class="flex items-center justify-between bg-slate-900/60 px-3 py-2 rounded-lg border border-slate-700/60 hover:border-slate-600 transition">
+                    <div class="flex items-center justify-between bg-white dark:bg-anthracite-900/60 px-3 py-2 rounded-xl border border-slate-200 dark:border-anthracite-700/60 hover:border-slate-300 dark:hover:border-anthracite-600 transition shadow-sm">
                         <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow" style="background-color: ${u.avatarColor || '#6366f1'}">
+                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow" style="background-color: ${u.avatarColor || '#3b82f6'}">
                                 ${u.name ? u.name.substring(0, 2).toUpperCase() : '??'}
                             </div>
                             <div>
-                                <div class="text-sm font-medium leading-tight text-slate-200">${u.name}</div>
-                                <div class="text-[11px] text-slate-400">${u.role} · ${u.email}</div>
+                                <div class="text-sm font-semibold leading-tight text-slate-800 dark:text-slate-200">${u.name}</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400">${u.role} · ${u.email}</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-1">
-                            <button onclick="openEditUserModal('${u._id}')" class="text-slate-400 hover:text-indigo-400 p-1 rounded hover:bg-slate-800 transition" title="Modifier le collaborateur">
+                            <button onclick="openEditUserModal('${u._id}')" class="text-slate-400 hover:text-blue-600 p-1 rounded hover:bg-slate-100 dark:hover:bg-anthracite-800 transition" title="Modifier le collaborateur">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                             </button>
-                            <button onclick="deleteUser('${u._id}')" class="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition" title="Retirer le collaborateur">
+                            <button onclick="deleteUser('${u._id}')" class="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-slate-100 dark:hover:bg-anthracite-800 transition" title="Retirer le collaborateur">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             </button>
                         </div>
@@ -394,16 +653,23 @@
             const current = users.find(u => u._id === currentUserId) || users[0];
             if (!current) return;
             const avatar = document.getElementById('currentUserAvatar');
-            avatar.style.backgroundColor = current.avatarColor || '#6366f1';
+            avatar.style.backgroundColor = current.avatarColor || '#3b82f6';
             avatar.textContent = current.name ? current.name.substring(0, 2).toUpperCase() : '?';
 
             document.getElementById('currentUserName').textContent = current.name;
             const sel = document.getElementById('userSessionSelect');
-            sel.innerHTML = users.map(u => `<option value="${u._id}" ${u._id === current._id ? 'selected' : ''}>En tant que: ${u.name}</option>`).join('');
+            sel.innerHTML = users.map(u => `<option value="${u._id}" ${u._id === current._id ? 'selected' : ''}>${u.name}</option>`).join('');
         }
 
         function switchCurrentUser(userId) {
             currentUserId = userId;
+            const u = users.find(x => x._id === userId);
+            if (u && currentUserSession) {
+                currentUserSession.userId = u._id;
+                currentUserSession.name = u.name;
+                currentUserSession.email = u.email;
+                localStorage.setItem('nexusflow_auth', JSON.stringify(currentUserSession));
+            }
             renderUserSession();
         }
 
@@ -418,22 +684,22 @@
             container.innerHTML = projects.map(p => {
                 const active = currentProject && currentProject._id === p._id;
                 return `
-                    <div onclick="selectProject('${p._id}')" class="cursor-pointer p-3 rounded-xl border transition ${active ? 'bg-indigo-600/20 border-indigo-500/70 shadow' : 'bg-slate-900/40 border-slate-700/60 hover:border-slate-600'}">
+                    <div onclick="selectProject('${p._id}')" class="cursor-pointer p-3 rounded-2xl border transition shadow-sm ${active ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-500/80 shadow' : 'bg-white dark:bg-anthracite-900/40 border-slate-200 dark:border-anthracite-700/60 hover:border-slate-300 dark:hover:border-anthracite-600'}">
                         <div class="flex justify-between items-start">
-                            <span class="font-semibold text-sm ${active ? 'text-indigo-200' : 'text-slate-200'}">${p.name}</span>
+                            <span class="font-bold text-sm ${active ? 'text-blue-700 dark:text-blue-200' : 'text-slate-800 dark:text-slate-200'}">${p.name}</span>
                             <div class="flex items-center gap-1">
-                                <button onclick="event.stopPropagation(); openEditProjectModal('${p._id}')" class="text-slate-400 hover:text-indigo-400 p-1 rounded hover:bg-slate-800 transition" title="Modifier le projet">
+                                <button onclick="event.stopPropagation(); openEditProjectModal('${p._id}')" class="text-slate-400 hover:text-blue-600 p-1 rounded hover:bg-slate-100 dark:hover:bg-anthracite-800 transition" title="Modifier le projet">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                 </button>
-                                <button onclick="event.stopPropagation(); deleteProject('${p._id}')" class="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition" title="Supprimer le projet">
+                                <button onclick="event.stopPropagation(); deleteProject('${p._id}')" class="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-slate-100 dark:hover:bg-anthracite-800 transition" title="Supprimer le projet">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </div>
                         </div>
-                        <p class="text-xs text-slate-400 truncate mt-1">${p.description || 'Sans description'}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-1">${p.description || 'Sans description'}</p>
                         <div class="flex items-center -space-x-1 mt-2.5">
                             ${(p.memberIds || []).map(m => `
-                                <span title="${m.name || 'Membre'}" class="w-5 h-5 rounded-full text-[9px] font-bold flex items-center justify-center text-white border border-slate-900" style="background-color: ${m.avatarColor || '#6366f1'}">
+                                <span title="${m.name || 'Membre'}" class="w-5 h-5 rounded-full text-[9px] font-bold flex items-center justify-center text-white border border-white dark:border-anthracite-950" style="background-color: ${m.avatarColor || '#3b82f6'}">
                                     ${m.name ? m.name.substring(0, 2).toUpperCase() : '?'}
                                 </span>
                             `).join('')}
@@ -457,22 +723,21 @@
             renderCurrentView();
         }
 
-        // Gestion des vues par onglets (Kanban, Dashboard, Team)
+        // VUES PAR ONGLETS (KANBAN, DASHBOARD, TEAM)
         function switchView(viewName) {
             currentView = viewName;
             ['kanban', 'dashboard', 'team'].forEach(v => {
                 const btn = document.getElementById('tab' + v.charAt(0).toUpperCase() + v.slice(1));
                 const container = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Container');
                 if (v === viewName) {
-                    btn.className = "text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition flex items-center gap-1.5 shadow";
+                    btn.className = "text-xs font-bold px-4 py-2 rounded-xl bg-blue-600 text-white transition flex items-center gap-1.5 shadow";
                     container.classList.remove('hidden');
                 } else {
-                    btn.className = "text-xs font-semibold px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5";
+                    btn.className = "text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5";
                     container.classList.add('hidden');
                 }
             });
 
-            // Masquer/Afficher les filtres Kanban selon la vue
             const kControls = document.getElementById('kanbanControls');
             if (viewName === 'kanban') {
                 kControls.classList.remove('hidden');
@@ -516,15 +781,15 @@
             board.innerHTML = COLUMNS.map(col => {
                 const colTasks = filteredTasks.filter(t => t.status === col.id);
                 return `
-                    <div class="bg-slate-800/40 border border-slate-700/80 rounded-2xl p-4 flex flex-col kanban-col shadow-inner"
+                    <div class="bg-white/70 dark:bg-anthracite-900/40 border border-slate-200 dark:border-anthracite-700/80 rounded-3xl p-4 flex flex-col kanban-col shadow-sm"
                          ondragover="event.preventDefault()"
                          ondrop="dropTask(event, '${col.id}')">
-                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-700/60">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200 dark:border-anthracite-700/60">
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full ${col.badge}"></span>
-                                <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">${col.label}</h3>
+                                <h3 class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">${col.label}</h3>
                             </div>
-                            <span class="text-xs bg-slate-900 px-2 py-0.5 rounded-full text-slate-400 font-semibold border border-slate-700/60">
+                            <span class="text-xs bg-slate-100 dark:bg-anthracite-950 px-2 py-0.5 rounded-full text-slate-500 dark:text-slate-400 font-bold border border-slate-200 dark:border-anthracite-700/60">
                                 ${colTasks.length}
                             </span>
                         </div>
@@ -538,47 +803,47 @@
 
                                 return `
                                     <div draggable="true" ondragstart="dragTask(event, '${t._id}')"
-                                         class="bg-slate-900 border border-slate-700/80 hover:border-indigo-500/60 rounded-xl p-3.5 shadow transition cursor-grab active:cursor-grabbing">
+                                         class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700/80 hover:border-blue-500/80 rounded-2xl p-4 shadow-sm hover:shadow transition cursor-grab active:cursor-grabbing">
                                         <div class="flex justify-between items-start gap-2 mb-2">
-                                            <span class="text-[10px] px-2 py-0.5 rounded uppercase tracking-wider ${PRIORITY_STYLE[t.priority] || PRIORITY_STYLE.MEDIUM}">
+                                            <span class="text-[10px] px-2 py-0.5 rounded-lg uppercase tracking-wider ${PRIORITY_STYLE[t.priority] || PRIORITY_STYLE.MEDIUM}">
                                                 ${t.priority}
                                             </span>
                                             <div class="flex gap-1 items-center">
-                                                <button onclick="openChatModal('${t._id}')" class="text-xs text-slate-400 hover:text-indigo-400 flex items-center gap-1 bg-slate-800/80 px-2 py-1 rounded border border-slate-700 transition" title="Discussion / Commentaires">
+                                                <button onclick="openChatModal('${t._id}')" class="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 flex items-center gap-1 bg-slate-50 dark:bg-anthracite-900 px-2 py-1 rounded-lg border border-slate-200 dark:border-anthracite-700 transition" title="Discussion / Commentaires">
                                                     <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                                    <span class="text-[10px] font-semibold">${commentCount}</span>
+                                                    <span class="text-[10px] font-bold">${commentCount}</span>
                                                 </button>
-                                                <button onclick="openTaskModal('${t._id}')" class="text-slate-400 hover:text-indigo-400 p-1 rounded hover:bg-slate-800 transition" title="Modifier la tâche">
+                                                <button onclick="openTaskModal('${t._id}')" class="text-slate-400 hover:text-blue-600 p-1 rounded hover:bg-slate-50 dark:hover:bg-anthracite-800 transition" title="Modifier la tâche">
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                                 </button>
-                                                <button onclick="deleteTask('${t._id}')" class="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition" title="Supprimer la tâche">
+                                                <button onclick="deleteTask('${t._id}')" class="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-slate-50 dark:hover:bg-anthracite-800 transition" title="Supprimer la tâche">
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <h4 class="font-semibold text-sm mb-1 text-slate-100">${t.title}</h4>
-                                        ${t.description ? `<p class="text-xs text-slate-400 mb-3 line-clamp-2">${t.description}</p>` : ''}
+                                        <h4 class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">${t.title}</h4>
+                                        ${t.description ? `<p class="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">${t.description}</p>` : ''}
 
                                         <div class="flex flex-wrap gap-1 mb-3">
                                             ${(t.tags || []).map(tag => `
-                                                <span class="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-1.5 py-0.5 rounded">
+                                                <span class="text-[10px] bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20 px-2 py-0.5 rounded-md font-medium">
                                                     #${tag}
                                                 </span>
                                             `).join('')}
                                         </div>
 
-                                        <div class="flex items-center justify-between pt-2.5 border-t border-slate-800 text-xs">
+                                        <div class="flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-anthracite-800 text-xs">
                                             <!-- Multi-assignés stack -->
                                             <div class="flex items-center -space-x-1.5">
                                                 ${assignees.length > 0 ? assignees.map(a => `
-                                                    <span title="${a.name || 'Membre'}" class="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center text-white border-2 border-slate-900 shadow" style="background-color: ${a.avatarColor || '#6366f1'}">
+                                                    <span title="${a.name || 'Membre'}" class="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center text-white border-2 border-white dark:border-anthracite-850 shadow" style="background-color: ${a.avatarColor || '#3b82f6'}">
                                                         ${a.name ? a.name.substring(0, 2).toUpperCase() : '?'}
                                                     </span>
-                                                `).join('') : `<span class="text-slate-500 italic text-[11px]">Non assignée</span>`}
+                                                `).join('') : `<span class="text-slate-400 italic text-[11px]">Non assignée</span>`}
                                             </div>
 
-                                            <select onchange="changeTaskStatus('${t._id}', this.value)" class="bg-slate-800 border border-slate-700 text-[11px] rounded px-1.5 py-0.5 text-slate-300 outline-none">
+                                            <select onchange="changeTaskStatus('${t._id}', this.value)" class="bg-slate-50 dark:bg-anthracite-900 border border-slate-200 dark:border-anthracite-700 text-[11px] rounded-lg px-2 py-1 text-slate-700 dark:text-slate-300 outline-none font-medium">
                                                 ${COLUMNS.map(c => `<option value="${c.id}" ${c.id === t.status ? 'selected' : ''}>${c.label}</option>`).join('')}
                                             </select>
                                         </div>
@@ -604,7 +869,6 @@
             document.getElementById('kpiActive').textContent = active;
             document.getElementById('kpiCritical').textContent = critical;
 
-            // Barres de priorité
             const prioCounts = {
                 CRITICAL: tasks.filter(t => t.priority === 'CRITICAL').length,
                 HIGH: tasks.filter(t => t.priority === 'HIGH').length,
@@ -616,7 +880,7 @@
                 CRITICAL: 'bg-rose-500',
                 HIGH: 'bg-amber-500',
                 MEDIUM: 'bg-blue-500',
-                LOW: 'bg-slate-500'
+                LOW: 'bg-slate-400 dark:bg-slate-600'
             };
 
             const pContainer = document.getElementById('priorityBars');
@@ -625,17 +889,16 @@
                 return `
                     <div>
                         <div class="flex justify-between text-xs mb-1">
-                            <span class="text-slate-300 font-semibold">${key}</span>
-                            <span class="text-slate-400">${count} tâche(s) (${barPercent}%)</span>
+                            <span class="text-slate-700 dark:text-slate-300 font-semibold">${key}</span>
+                            <span class="text-slate-500 dark:text-slate-400 font-medium">${count} tâche(s) (${barPercent}%)</span>
                         </div>
-                        <div class="w-full bg-slate-900 rounded-full h-2 border border-slate-700">
-                            <div class="${prioColors[key]} h-2 rounded-full transition-all duration-500" style="width: ${barPercent}%"></div>
+                        <div class="w-full bg-slate-100 dark:bg-anthracite-900 rounded-full h-2.5 border border-slate-200 dark:border-anthracite-700">
+                            <div class="${prioColors[key]} h-2.5 rounded-full transition-all duration-500" style="width: ${barPercent}%"></div>
                         </div>
                     </div>
                 `;
             }).join('');
 
-            // Barres de charge collaborateur
             const projectMembers = (currentProject && currentProject.memberIds) || [];
             const wContainer = document.getElementById('workloadBars');
             if (projectMembers.length === 0) {
@@ -653,15 +916,15 @@
                         <div>
                             <div class="flex justify-between items-center text-xs mb-1">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style="background-color: ${m.avatarColor || '#6366f1'}">
+                                    <span class="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style="background-color: ${m.avatarColor || '#3b82f6'}">
                                         ${m.name ? m.name.substring(0, 2).toUpperCase() : '?'}
                                     </span>
-                                    <span class="text-slate-200 font-medium">${m.name}</span>
+                                    <span class="text-slate-800 dark:text-slate-200 font-semibold">${m.name}</span>
                                 </div>
-                                <span class="text-slate-400">${mTasks.length} tâche(s) (${mDone} terminées)</span>
+                                <span class="text-slate-500 dark:text-slate-400">${mTasks.length} tâche(s) (${mDone} terminées)</span>
                             </div>
-                            <div class="w-full bg-slate-900 rounded-full h-2 border border-slate-700">
-                                <div class="bg-indigo-500 h-2 rounded-full transition-all duration-500" style="width: ${mPercent}%"></div>
+                            <div class="w-full bg-slate-100 dark:bg-anthracite-900 rounded-full h-2.5 border border-slate-200 dark:border-anthracite-700">
+                                <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-500" style="width: ${mPercent}%"></div>
                             </div>
                         </div>
                     `;
@@ -685,27 +948,27 @@
                 const doneCount = userTasks.filter(t => t.status === 'DONE').length;
 
                 return `
-                    <div class="bg-slate-800/60 border border-slate-700/80 p-5 rounded-2xl flex flex-col justify-between shadow">
+                    <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 p-5 rounded-3xl flex flex-col justify-between shadow-sm">
                         <div class="flex items-center gap-3 mb-3">
-                            <div class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shadow" style="background-color: ${m.avatarColor || '#6366f1'}">
+                            <div class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shadow" style="background-color: ${m.avatarColor || '#3b82f6'}">
                                 ${m.name ? m.name.substring(0, 2).toUpperCase() : '??'}
                             </div>
                             <div>
-                                <h4 class="font-bold text-sm text-white">${m.name}</h4>
-                                <p class="text-xs text-indigo-400 font-medium">${m.role || 'Membre'}</p>
+                                <h4 class="font-bold text-sm text-slate-900 dark:text-white">${m.name}</h4>
+                                <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold">${m.role || 'Membre'}</p>
                                 <p class="text-[11px] text-slate-400">${m.email}</p>
                             </div>
                         </div>
-                        <div class="pt-3 border-t border-slate-700/60 flex justify-between items-center text-xs text-slate-400">
-                            <span>Tâches assignées : <strong class="text-slate-200">${userTasks.length}</strong></span>
-                            <span class="text-emerald-400 font-semibold">${doneCount} terminées</span>
+                        <div class="pt-3 border-t border-slate-100 dark:border-anthracite-700 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
+                            <span>Tâches : <strong class="text-slate-800 dark:text-slate-200">${userTasks.length}</strong></span>
+                            <span class="text-emerald-600 dark:text-emerald-400 font-bold">${doneCount} terminées</span>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // Drag & Drop
+        // DRAG & DROP
         let draggedTaskId = null;
         function dragTask(ev, taskId) {
             draggedTaskId = taskId;
@@ -728,7 +991,7 @@
             renderCurrentView();
         }
 
-        // Système de discussion / chat par tâche
+        // CHAT DE TÂCHE
         function openChatModal(taskId) {
             activeChatTaskId = taskId;
             const task = tasks.find(t => t._id === taskId);
@@ -738,7 +1001,7 @@
             document.getElementById('chatTaskDesc').textContent = task.description || 'Fil de discussion et suivi de la tâche';
             const prioBadge = document.getElementById('chatTaskPriority');
             prioBadge.textContent = task.priority;
-            prioBadge.className = `inline-block text-[10px] px-2 py-0.5 rounded uppercase font-semibold mb-1 ${PRIORITY_STYLE[task.priority]}`;
+            prioBadge.className = `inline-block text-[10px] px-2 py-0.5 rounded-lg uppercase font-semibold mb-1 ${PRIORITY_STYLE[task.priority]}`;
 
             renderChatMessages(task.comments || []);
             const overlay = document.getElementById('chatModalOverlay');
@@ -757,7 +1020,7 @@
             const container = document.getElementById('chatMessageList');
             if (comments.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-8 text-slate-500 text-xs italic">
+                    <div class="text-center py-8 text-slate-400 text-xs italic">
                         Aucun commentaire pour l'instant. Lancez la discussion ci-dessous !
                     </div>
                 `;
@@ -765,22 +1028,22 @@
             }
 
             container.innerHTML = comments.map(c => {
-                const authorColor = (c.userId && c.userId.avatarColor) || '#6366f1';
+                const authorColor = (c.userId && c.userId.avatarColor) || '#3b82f6';
                 const authorName = (c.userId && c.userId.name) || c.authorName || 'Collaborateur';
                 const timeStr = new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' +
                                 new Date(c.createdAt).toLocaleDateString();
 
                 return `
                     <div class="flex items-start gap-2.5">
-                        <div class="w-7 h-7 rounded-full text-[10px] font-bold flex items-center justify-center text-white shrink-0 mt-0.5" style="background-color: ${authorColor}">
+                        <div class="w-7 h-7 rounded-full text-[10px] font-bold flex items-center justify-center text-white shrink-0 mt-0.5 shadow" style="background-color: ${authorColor}">
                             ${authorName.substring(0, 2).toUpperCase()}
                         </div>
-                        <div class="bg-slate-800 border border-slate-700/80 rounded-2xl px-3.5 py-2.5 max-w-[85%] shadow">
+                        <div class="bg-white dark:bg-anthracite-900 border border-slate-200 dark:border-anthracite-700 rounded-2xl px-3.5 py-2.5 max-w-[85%] shadow-sm">
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="text-xs font-bold text-slate-200">${authorName}</span>
+                                <span class="text-xs font-bold text-slate-900 dark:text-slate-200">${authorName}</span>
                                 <span class="text-[10px] text-slate-400">${timeStr}</span>
                             </div>
-                            <p class="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">${c.text}</p>
+                            <p class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">${c.text}</p>
                         </div>
                     </div>
                 `;
@@ -806,23 +1069,22 @@
             });
 
             input.value = '';
-            // Met à jour la tâche locale et réaffiche
             const idx = tasks.findIndex(t => t._id === activeChatTaskId);
             if (idx !== -1) tasks[idx] = updated;
             renderChatMessages(updated.comments || []);
             renderKanban();
         }
 
-        // Modales CRUD
+        // MODALES CRUD
         function showModal(title, formHtml, onSubmit) {
             document.getElementById('modalTitle').textContent = title;
             const form = document.getElementById('modalForm');
             form.innerHTML = formHtml + `
-                <div class="flex justify-end gap-2 pt-4 border-t border-slate-700">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-lg text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 transition">
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-anthracite-700">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-xs bg-slate-100 hover:bg-slate-200 dark:bg-anthracite-800 dark:hover:bg-anthracite-700 text-slate-700 dark:text-slate-300 font-semibold transition">
                         Annuler
                     </button>
-                    <button type="submit" class="px-4 py-2 rounded-lg text-xs bg-indigo-600 hover:bg-indigo-500 font-semibold text-white transition shadow">
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs bg-blue-600 hover:bg-blue-500 font-bold text-white transition shadow">
                         Enregistrer
                     </button>
                 </div>
@@ -846,12 +1108,12 @@
         function openCompanyModal() {
             showModal('Nouvelle Entreprise (Tenant)', `
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Nom de l'entreprise</label>
-                    <input name="name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom de l'entreprise</label>
+                    <input name="name" required class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Plan SaaS</label>
-                    <select name="plan" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Plan SaaS</label>
+                    <select name="plan" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none">
                         <option value="PRO">PRO</option>
                         <option value="ENTERPRISE">ENTERPRISE</option>
                         <option value="FREE">FREE</option>
@@ -872,12 +1134,12 @@
             if (!currentComp) return;
             showModal('Modifier l\'Entreprise', `
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Nom de l'entreprise</label>
-                    <input name="name" required value="${currentComp.name}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom de l'entreprise</label>
+                    <input name="name" required value="${currentComp.name}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Plan SaaS</label>
-                    <select name="plan" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Plan SaaS</label>
+                    <select name="plan" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none">
                         <option value="PRO" ${currentComp.plan === 'PRO' ? 'selected' : ''}>PRO</option>
                         <option value="ENTERPRISE" ${currentComp.plan === 'ENTERPRISE' ? 'selected' : ''}>ENTERPRISE</option>
                         <option value="FREE" ${currentComp.plan === 'FREE' ? 'selected' : ''}>FREE</option>
@@ -896,16 +1158,16 @@
         function openUserModal() {
             showModal('Ajouter un Collaborateur', `
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Nom complet</label>
-                    <input name="name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom complet</label>
+                    <input name="name" required class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Email professionnel</label>
-                    <input name="email" type="email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email professionnel</label>
+                    <input name="email" type="email" required class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Rôle / Titre</label>
-                    <input name="role" value="Développeur" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rôle / Titre</label>
+                    <input name="role" value="Développeur" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
             `, async (fd) => {
                 await api('/api/users', {
@@ -921,16 +1183,16 @@
             if (!existing) return;
             showModal('Modifier le Collaborateur', `
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Nom complet</label>
-                    <input name="name" required value="${existing.name}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom complet</label>
+                    <input name="name" required value="${existing.name}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Email professionnel</label>
-                    <input name="email" type="email" required value="${existing.email}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email professionnel</label>
+                    <input name="email" type="email" required value="${existing.email}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Rôle / Titre</label>
-                    <input name="role" value="${existing.role || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rôle / Titre</label>
+                    <input name="role" value="${existing.role || ''}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
             `, async (fd) => {
                 await api(`/api/users/${userId}`, {
@@ -958,25 +1220,25 @@
 
         function openProjectModal() {
             const userCheckboxes = users.map(u => `
-                <label class="flex items-center gap-2 text-xs bg-slate-900 px-3 py-2 rounded-lg border border-slate-700/80 cursor-pointer hover:border-slate-600">
-                    <input type="checkbox" name="memberIds" value="${u._id}" checked class="rounded text-indigo-600 focus:ring-0">
+                <label class="flex items-center gap-2 text-xs bg-slate-50 dark:bg-anthracite-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-anthracite-700 cursor-pointer hover:border-blue-500">
+                    <input type="checkbox" name="memberIds" value="${u._id}" checked class="rounded text-blue-600 focus:ring-0">
                     <span>${u.name} <span class="text-slate-400">(${u.role})</span></span>
                 </label>
             `).join('');
 
             showModal('Nouveau Projet', `
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Nom du projet</label>
-                    <input name="name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom du projet</label>
+                    <input name="name" required class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Description</label>
-                    <textarea name="description" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"></textarea>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                    <textarea name="description" rows="2" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"></textarea>
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Membres assignés au projet</label>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Membres assignés au projet</label>
                     <div class="space-y-1 max-h-36 overflow-y-auto pr-1">
-                        ${userCheckboxes || '<p class="text-xs text-slate-500 italic">Aucun utilisateur disponible.</p>'}
+                        ${userCheckboxes || '<p class="text-xs text-slate-400 italic">Aucun utilisateur disponible.</p>'}
                     </div>
                 </div>
             `, async (fd) => {
@@ -998,25 +1260,25 @@
             if (!existing) return;
             const currentMemberIds = (existing.memberIds || []).map(m => (m._id || m).toString());
             const userCheckboxes = users.map(u => `
-                <label class="flex items-center gap-2 text-xs bg-slate-900 px-3 py-2 rounded-lg border border-slate-700/80 cursor-pointer hover:border-slate-600">
-                    <input type="checkbox" name="memberIds" value="${u._id}" ${currentMemberIds.includes(u._id.toString()) ? 'checked' : ''} class="rounded text-indigo-600 focus:ring-0">
+                <label class="flex items-center gap-2 text-xs bg-slate-50 dark:bg-anthracite-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-anthracite-700 cursor-pointer hover:border-blue-500">
+                    <input type="checkbox" name="memberIds" value="${u._id}" ${currentMemberIds.includes(u._id.toString()) ? 'checked' : ''} class="rounded text-blue-600 focus:ring-0">
                     <span>${u.name} <span class="text-slate-400">(${u.role})</span></span>
                 </label>
             `).join('');
 
             showModal('Modifier le Projet', `
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Nom du projet</label>
-                    <input name="name" required value="${existing.name}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom du projet</label>
+                    <input name="name" required value="${existing.name}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Description</label>
-                    <textarea name="description" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">${existing.description || ''}</textarea>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                    <textarea name="description" rows="2" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">${existing.description || ''}</textarea>
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Membres assignés au projet</label>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Membres assignés au projet</label>
                     <div class="space-y-1 max-h-36 overflow-y-auto pr-1">
-                        ${userCheckboxes || '<p class="text-xs text-slate-500 italic">Aucun utilisateur disponible.</p>'}
+                        ${userCheckboxes || '<p class="text-xs text-slate-400 italic">Aucun utilisateur disponible.</p>'}
                     </div>
                 </div>
             `, async (fd) => {
@@ -1035,14 +1297,12 @@
             });
         }
 
-        // Modale de tâche avec support de MULTI-ASSIGNATION
         function openTaskModal(taskId = null) {
             const existing = taskId ? tasks.find(t => t._id === taskId) : null;
             const projectMembers = (currentProject && currentProject.memberIds && currentProject.memberIds.length > 0)
                 ? currentProject.memberIds
                 : users;
 
-            // Déterminer les IDs actuellement assignés
             const currentAssigneeIds = existing
                 ? (existing.assigneeIds && existing.assigneeIds.length > 0
                     ? existing.assigneeIds.map(a => (a._id || a).toString())
@@ -1050,9 +1310,9 @@
                 : [];
 
             const memberCheckboxes = projectMembers.map(u => `
-                <label class="flex items-center gap-2 text-xs bg-slate-900 px-3 py-2 rounded-lg border border-slate-700/80 cursor-pointer hover:border-slate-600">
-                    <input type="checkbox" name="assigneeIds" value="${u._id}" ${currentAssigneeIds.includes(u._id.toString()) ? 'checked' : ''} class="rounded text-indigo-600 focus:ring-0">
-                    <span class="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style="background-color: ${u.avatarColor || '#6366f1'}">
+                <label class="flex items-center gap-2 text-xs bg-slate-50 dark:bg-anthracite-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-anthracite-700 cursor-pointer hover:border-blue-500">
+                    <input type="checkbox" name="assigneeIds" value="${u._id}" ${currentAssigneeIds.includes(u._id.toString()) ? 'checked' : ''} class="rounded text-blue-600 focus:ring-0">
+                    <span class="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style="background-color: ${u.avatarColor || '#3b82f6'}">
                         ${u.name ? u.name.substring(0, 2).toUpperCase() : '?'}
                     </span>
                     <span>${u.name} <span class="text-slate-400">(${u.role || 'Membre'})</span></span>
@@ -1061,36 +1321,36 @@
 
             showModal(existing ? 'Modifier la Tâche' : 'Créer une Tâche', `
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Titre de la tâche</label>
-                    <input name="title" required value="${existing ? existing.title : ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Titre de la tâche</label>
+                    <input name="title" required value="${existing ? existing.title : ''}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Description</label>
-                    <textarea name="description" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">${existing ? existing.description : ''}</textarea>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                    <textarea name="description" rows="2" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">${existing ? existing.description : ''}</textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1 font-medium">Statut</label>
-                        <select name="status" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Statut</label>
+                        <select name="status" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none">
                             ${COLUMNS.map(c => `<option value="${c.id}" ${existing && existing.status === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1 font-medium">Priorité</label>
-                        <select name="priority" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Priorité</label>
+                        <select name="priority" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none">
                             ${['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map(p => `<option value="${p}" ${(existing ? existing.priority : 'MEDIUM') === p ? 'selected' : ''}>${p}</option>`).join('')}
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Collaborateurs assignés (Multi-sélection)</label>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Collaborateurs assignés (Multi-sélection)</label>
                     <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                        ${memberCheckboxes || '<p class="text-xs text-slate-500 italic">Aucun collaborateur disponible.</p>'}
+                        ${memberCheckboxes || '<p class="text-xs text-slate-400 italic">Aucun collaborateur disponible.</p>'}
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-medium">Tags (séparés par des virgules)</label>
-                    <input name="tags" placeholder="Backend, MongoDB, Sharding" value="${existing ? (existing.tags || []).join(', ') : ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tags (séparés par des virgules)</label>
+                    <input name="tags" placeholder="Backend, MongoDB, Sharding" value="${existing ? (existing.tags || []).join(', ') : ''}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
             `, async (fd) => {
                 const assigneeIds = fd.getAll('assigneeIds');
@@ -1130,7 +1390,7 @@
             if (companies.length > 0) {
                 await switchCompany(companies[0]._id);
             } else {
-                location.reload();
+                logout();
             }
         }
 
@@ -1175,7 +1435,7 @@
             }
         }
 
-        // Démarrage automatique
+        // Lancement initial
         init();
     </script>
 </body>
