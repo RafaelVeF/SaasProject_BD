@@ -16,6 +16,8 @@ router.get('/projects/:projectId/tasks', requireTenant, async (req, res) => {
             projectId: req.params.projectId
         })
             .populate('assigneeId', 'name email role avatarColor')
+            .populate('assigneeIds', 'name email role avatarColor')
+            .populate('comments.userId', 'name email role avatarColor')
             .sort({ createdAt: -1 });
 
         res.json(tasks);
@@ -24,7 +26,7 @@ router.get('/projects/:projectId/tasks', requireTenant, async (req, res) => {
     }
 });
 
-// POST /api/projects/:projectId/tasks - Créer une tâche
+// POST /api/projects/:projectId/tasks - Créer une tâche (multi-assignation et validation)
 router.post('/projects/:projectId/tasks', requireTenant, async (req, res) => {
     if (!require('mongoose').Types.ObjectId.isValid(req.params.projectId)) {
         return res.status(400).json({ error: "Identifiant de projet invalide." });
@@ -38,14 +40,21 @@ router.post('/projects/:projectId/tasks', requireTenant, async (req, res) => {
             return res.status(404).json({ error: "Projet introuvable dans cette entreprise." });
         }
 
-        // Valider l'assigné s'il est fourni
-        if (req.body.assigneeId) {
-            const validUser = await User.exists({
-                _id: req.body.assigneeId,
+        // Harmonisation multi-assignation
+        let assigneeIds = [];
+        if (Array.isArray(req.body.assigneeIds)) {
+            assigneeIds = req.body.assigneeIds.filter(Boolean);
+        } else if (req.body.assigneeId) {
+            assigneeIds = [req.body.assigneeId];
+        }
+
+        if (assigneeIds.length > 0) {
+            const validCount = await User.countDocuments({
+                _id: { $in: assigneeIds },
                 companyId: req.companyId
             });
-            if (!validUser) {
-                return res.status(403).json({ error: "L'assigné n'appartient pas à cette entreprise." });
+            if (validCount !== assigneeIds.length) {
+                return res.status(403).json({ error: "Violation d'isolation : Un ou plusieurs collaborateurs n'appartiennent pas à cette entreprise." });
             }
         }
 
@@ -53,17 +62,23 @@ router.post('/projects/:projectId/tasks', requireTenant, async (req, res) => {
         const task = await Task.create({
             ...req.body,
             companyId: req.companyId,
-            projectId: req.params.projectId
+            projectId: req.params.projectId,
+            assigneeIds: assigneeIds,
+            assigneeId: assigneeIds[0] || null
         });
 
-        const populated = await task.populate('assigneeId', 'name email role avatarColor');
+        const populated = await task.populate([
+            { path: 'assigneeId', select: 'name email role avatarColor' },
+            { path: 'assigneeIds', select: 'name email role avatarColor' },
+            { path: 'comments.userId', select: 'name email role avatarColor' }
+        ]);
         res.status(201).json(populated);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// PUT /api/tasks/:id - Modifier une tâche (statut, assigné, priorité...)
+// PUT /api/tasks/:id - Modifier une tâche (statut, priorité, multi-assignation...)
 router.put('/tasks/:id', requireTenant, async (req, res) => {
     if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
         return res.status(400).json({ error: "Identifiant de tâche invalide." });
@@ -73,13 +88,31 @@ router.put('/tasks/:id', requireTenant, async (req, res) => {
         delete req.body.projectId;
         delete req.body._id;
 
-        if (req.body.assigneeId) {
-            const validUser = await User.exists({
-                _id: req.body.assigneeId,
-                companyId: req.companyId
-            });
-            if (!validUser) {
-                return res.status(403).json({ error: "L'assigné n'appartient pas à cette entreprise." });
+        if (req.body.assigneeIds !== undefined) {
+            const assigneeIds = Array.isArray(req.body.assigneeIds) ? req.body.assigneeIds.filter(Boolean) : [];
+            if (assigneeIds.length > 0) {
+                const validCount = await User.countDocuments({
+                    _id: { $in: assigneeIds },
+                    companyId: req.companyId
+                });
+                if (validCount !== assigneeIds.length) {
+                    return res.status(403).json({ error: "Violation d'isolation : Collaborateur externe détecté." });
+                }
+            }
+            req.body.assigneeIds = assigneeIds;
+            req.body.assigneeId = assigneeIds[0] || null;
+        } else if (req.body.assigneeId !== undefined) {
+            if (req.body.assigneeId) {
+                const validUser = await User.exists({
+                    _id: req.body.assigneeId,
+                    companyId: req.companyId
+                });
+                if (!validUser) {
+                    return res.status(403).json({ error: "L'assigné n'appartient pas à cette entreprise." });
+                }
+                req.body.assigneeIds = [req.body.assigneeId];
+            } else {
+                req.body.assigneeIds = [];
             }
         }
 
@@ -87,10 +120,57 @@ router.put('/tasks/:id', requireTenant, async (req, res) => {
             { _id: req.params.id, companyId: req.companyId },
             req.body,
             { new: true, runValidators: true }
-        ).populate('assigneeId', 'name email role avatarColor');
+        )
+            .populate('assigneeId', 'name email role avatarColor')
+            .populate('assigneeIds', 'name email role avatarColor')
+            .populate('comments.userId', 'name email role avatarColor');
 
         if (!task) return res.status(404).json({ error: "Tâche introuvable." });
         res.json(task);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// POST /api/tasks/:id/comments - Ajouter un message/commentaire (chat de tâche)
+router.post('/tasks/:id/comments', requireTenant, async (req, res) => {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ error: "Identifiant de tâche invalide." });
+    }
+    if (!req.body.text || !req.body.text.trim()) {
+        return res.status(400).json({ error: "Le texte du commentaire est requis." });
+    }
+
+    try {
+        const task = await Task.findOne({ _id: req.params.id, companyId: req.companyId });
+        if (!task) return res.status(404).json({ error: "Tâche introuvable." });
+
+        let authorName = req.body.authorName || 'Collaborateur';
+        let userId = null;
+
+        if (req.body.userId && require('mongoose').Types.ObjectId.isValid(req.body.userId)) {
+            const user = await User.findOne({ _id: req.body.userId, companyId: req.companyId });
+            if (user) {
+                authorName = user.name;
+                userId = user._id;
+            }
+        }
+
+        task.comments.push({
+            userId,
+            authorName,
+            text: req.body.text.trim(),
+            createdAt: new Date()
+        });
+
+        await task.save();
+        const populated = await task.populate([
+            { path: 'assigneeId', select: 'name email role avatarColor' },
+            { path: 'assigneeIds', select: 'name email role avatarColor' },
+            { path: 'comments.userId', select: 'name email role avatarColor' }
+        ]);
+
+        res.status(201).json(populated);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }

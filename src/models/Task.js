@@ -20,6 +20,30 @@ const taskSchema = new mongoose.Schema({
         ref: 'User',
         default: null
     },
+    assigneeIds: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    comments: [{
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
+        },
+        authorName: {
+            type: String,
+            default: 'Anonyme'
+        },
+        text: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     title: {
         type: String,
         required: [true, "Le titre de la tâche est obligatoire"],

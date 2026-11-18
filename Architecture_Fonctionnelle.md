@@ -66,7 +66,20 @@
 - **Filtre par membre assigné** : Affichage exclusif des tâches confiées à un collaborateur spécifique (ou vue globale *Tous les membres*).
 - **Filtre par priorité** : Affichage ciblé selon le degré d'urgence.
 
-### 4.5 Jeu de Données de Démonstration (Seed 1-Clic)
+### 4.5 Multi-Assignation de Collaborateurs
+- Chaque tâche supporte l'assignation simultanée de plusieurs collaborateurs appartenant au projet.
+- Affichage visuel en cascade (*Avatar Stack*) sur les cartes Kanban et dans la vue détaillée.
+
+### 4.6 Fil de Discussion & Chat par Tâche
+- Chaque carte propose un bouton d'accès direct au fil de commentaires (`💬`).
+- Modale de discussion interactive permettant aux collaborateurs d'échanger des notes, retours d'avancement et blocages horodatés en direct.
+- Attribution automatique du message à l'utilisateur actif de la session.
+
+### 4.7 Vues Spécialisées : Tableau de Bord & Équipe Projet
+- **Tableau de Bord (Dashboard Analytics)** : KPI en temps réel (total des tâches, pourcentage d'avancement, tâches actives, répartition par priorité et charge de travail par collaborateur).
+- **Vue Équipe (Team View)** : Récapitulatif des membres du projet, compétences/rôles et volume de tâches attribuées.
+
+### 4.8 Jeu de Données de Démonstration (Seed 1-Clic)
 - Un bouton d'action dédié (`⚡ Réinitialiser & Démo`) dans l'en-tête permet de générer en une seconde deux entreprises complètes, distinctes et réalistes :
   1. **Nebula Tech (SaaS Cloud)** : Projet de sharding MongoDB avec tâches d'infrastructure et collaborateurs DevOps.
   2. **GreenSolar Collectif** : Projet solaire avec collaborateurs métier et tâches de télémétrie.

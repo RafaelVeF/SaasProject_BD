@@ -69,8 +69,8 @@ Espace de travail regroupant une équipe de collaborateurs et un ensemble de tâ
 }
 ```
 
-### 2.4 Collection `tasks` (Tâches & Tableau Kanban)
-Unités de travail visualisables et déplaçables au sein du tableau Kanban.
+### 2.4 Collection `tasks` (Tâches, Kanban & Fil de Discussion)
+Unités de travail visualisables et déplaçables au sein du tableau Kanban, supportant la multi-assignation et l'embarquement (*Embedding NoSQL*) des commentaires de discussion.
 
 ```json
 {
@@ -78,15 +78,30 @@ Unités de travail visualisables et déplaçables au sein du tableau Kanban.
   "companyId": { "$oid": "670d1a000000000000000001" },
   "projectId": { "$oid": "670d1c000000000000000020" },
   "assigneeId": { "$oid": "670d1b000000000000000010" },
+  "assigneeIds": [
+    { "$oid": "670d1b000000000000000010" },
+    { "$oid": "670d1b000000000000000011" }
+  ],
   "title": "Définir la Shard Key {companyId: 1}",
   "description": "Assurer la colocalisation des documents par entreprise sur le cluster",
   "status": "DONE",
   "priority": "CRITICAL",
   "tags": ["Database", "MongoDB", "Architecture"],
+  "comments": [
+    {
+      "userId": { "$oid": "670d1b000000000000000010" },
+      "authorName": "Sarah Connor",
+      "text": "La shard key composite {companyId: 1, _id: 1} est validée pour la Partie II !",
+      "createdAt": { "$date": "2026-10-14T16:20:00Z" }
+    }
+  ],
   "dueDate": { "$date": "2026-10-25T00:00:00Z" },
   "createdAt": { "$date": "2026-10-14T16:15:00Z" }
 }
 ```
+
+> **Justification du choix d'Embedding pour les commentaires :**  
+> Les commentaires constituent des sous-documents indissociables de la tâche. L'imbrication (*Embedding*) tire pleinement parti du modèle document de MongoDB : une seule opération atomique de lecture charge la carte Kanban et son historique d'échanges sans jointure (*$lookup*) coûteuse, et la suppression en cascade de la tâche élimine naturellement ses commentaires.
 
 ---
 
