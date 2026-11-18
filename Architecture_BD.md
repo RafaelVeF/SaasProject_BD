@@ -1,22 +1,25 @@
 # Spécification Technique & Modélisation NoSQL (MongoDB)
-## Plateforme SaaS Multi-Tenant de Gestion de Projet
+## Plateforme SaaS Multi-Tenant : NexusFlow (TD1 - Partie I)
 
 ---
 
 ## 1. Principes d'Architecture & Stratégie Multi-Tenant
 
-### 1.1 Isolation Logicielle Stricte (*Shared Database, Shared Schema*)
-Dans ce modèle SaaS, toutes les données résident au sein d'une même base de données MongoDB, optimisant ainsi les coûts et la scalabilité.
-Pour garantir une **isolation logique et étanche entre les entreprises** :
-- **Clé de cloisonnement (`companyId`)** : Présente obligatoirement comme attribut de premier niveau dans toutes les collections filles (`users`, `projects`, `tasks`, `audit_logs`, `invitations`).
-- **Filtrage automatique** : Chaque requête d'API (lecture, écriture, suppression) filtre obligatoirement sur le contexte `companyId` extrait du token JWT de l'utilisateur connecté.
+### 1.1 Modèle Multi-Tenant : Isolation Logique Stricte (*Shared Database, Shared Schema*)
+Dans cette architecture SaaS, toutes les données résident au sein d'une même base de données MongoDB, optimisant la mutualisation des ressources matérielles, la simplicité opérationnelle et les coûts d'hébergement.
 
-### 1.2 Anticipation du Sharding & de la Montée en Charge (Évolution TD Partie 2)
+Pour garantir une **isolation logique étanche entre les entreprises** :
+- **Clé de cloisonnement (`companyId`)** : Présente obligatoirement comme attribut de premier niveau dans toutes les collections filles (`users`, `projects`, `tasks`).
+- **Filtrage automatique par middleware (`requireTenant`)** : Chaque requête d'API (lecture, écriture, modification, suppression) inspecte le header `X-Company-Id` et filtre systématiquement les opérations MongoDB par ce contexte d'entreprise.
+- **Validation anti-fuite inter-entreprises** : Lors de l'assignation de membres à un projet ou à une tâche, l'API valide en amont que chaque identifiant d'utilisateur appartient strictement au `companyId` actif. Tout écart renvoie immédiatement un code HTTP `403 Forbidden`.
+
+### 1.2 Anticipation du Sharding & de la Montée en Charge (Partie II)
 > [!IMPORTANT]
 > **Shard Key ciblée : `{ "companyId": 1, "_id": 1 }`**
-> - **Colocalisation des données** : Grâce au préfixe `companyId`, l'intégralité des documents appartenant à un même tenant (projets, tâches, membres) est routée vers le **même fragment physique (shard)**.
-> - **Élimination du *Scatter-Gather*** : Les requêtes opérationnelles quotidiennes (ex. affichage d'un tableau Kanban) ciblent un seul shard plutôt que d'interroger l'ensemble du cluster distribué.
-> - **Connexion agnostic du code source** : La connexion s'appuie sur la variable d'environnement `MONGO_URI` (dans `.env` / `docker-compose.yml`), permettant une transition transparente vers un Replica Set (`replicaSet=rs0`) ou un cluster sharded via des routeurs `mongos`.
+>
+> 1. **Colocalisation des données (*Targeted Queries*)** : Grâce au préfixe `companyId`, l'intégralité des documents appartenant à une même entreprise (collaborateurs, projets, tâches Kanban) est physiquement routée vers le **même fragment (shard)**.
+> 2. **Élimination du *Scatter-Gather*** : Les requêtes opérationnelles quotidiennes (chargement d'un projet, navigation dans le Kanban) ciblent un seul shard plutôt que d'interroger l'ensemble des nœuds du cluster distribué.
+> 3. **Connexion agnostique du code source** : L'application lit exclusivement la chaîne de connexion depuis la variable d'environnement `MONGO_URI` (dans `config.env`). Le passage en Partie II à un Replica Set (`replicaSet=rs0`) ou un cluster sharded via des routeurs `mongos` se fait sans aucune modification du code source.
 
 ---
 
@@ -28,71 +31,46 @@ Représente l'entité juridique et organisationnelle souscrivant au service SaaS
 ```json
 {
   "_id": { "$oid": "670d1a000000000000000001" },
-  "name": "Acme Cloud Corp",
-  "slug": "acme-cloud",
-  "siren": "123456789",
-  "apeNum": "6201Z",
-  "address": "12 rue de la Paix, 75002 Paris",
-  "telephoneNumber": "+33140000000",
-  "billingEmail": "billing@acme.io",
+  "name": "Nebula Tech (SaaS Cloud)",
   "plan": "ENTERPRISE",
-  "status": "ACTIVE",
-  "createdAt": { "$date": "2026-10-14T16:00:00Z" },
-  "updatedAt": { "$date": "2026-10-14T16:00:00Z" }
+  "createdAt": { "$date": "2026-10-14T16:00:00Z" }
 }
 ```
 
----
-
-### 2.2 Collection `users` (Utilisateurs)
+### 2.2 Collection `users` (Collaborateurs)
 Collaborateurs rattachés obligatoirement à une entreprise hôte.
 
 ```json
 {
   "_id": { "$oid": "670d1b000000000000000010" },
   "companyId": { "$oid": "670d1a000000000000000001" },
-  "name": "Alice Martin",
-  "email": "alice@acme.io",
-  "passwordHash": "$2b$10$wN9aW6mH.K6b7S7XWvVb2.rQYV4f8X9wQk.v1k7Yv4g",
-  "role": "ADMIN",
-  "phoneNumber": "+33612345678",
-  "birthDate": { "$date": "1994-05-12T00:00:00Z" },
-  "avatarUrl": "https://cdn.saas.io/avatars/alice.png",
+  "name": "Sarah Connor",
+  "email": "sarah@nebula.io",
+  "role": "CTO",
   "avatarColor": "#6366f1",
-  "isActive": true,
-  "isEmailVerified": true,
-  "createdAt": { "$date": "2026-10-14T16:05:00Z" },
-  "updatedAt": { "$date": "2026-10-14T16:05:00Z" }
+  "createdAt": { "$date": "2026-10-14T16:05:00Z" }
 }
 ```
 
----
-
 ### 2.3 Collection `projects` (Espaces Projets)
-Cadre organisationnel regroupant les membres assignés et les tâches associées.
+Espace de travail regroupant une équipe de collaborateurs et un ensemble de tâches Kanban.
 
 ```json
 {
   "_id": { "$oid": "670d1c000000000000000020" },
   "companyId": { "$oid": "670d1a000000000000000001" },
-  "name": "Migration Kubernetes",
-  "description": "Déploiement de l'infrastructure multi-nœuds et conteneurisation",
-  "status": "ACTIVE",
-  "dueDate": { "$date": "2026-12-31T23:59:59Z" },
-  "createdBy": { "$oid": "670d1b000000000000000010" },
+  "name": "Cluster MongoDB Sharding",
+  "description": "Préparation de l'architecture distribuée Partie II",
   "memberIds": [
     { "$oid": "670d1b000000000000000010" },
     { "$oid": "670d1b000000000000000011" }
   ],
-  "createdAt": { "$date": "2026-10-14T16:10:00Z" },
-  "updatedAt": { "$date": "2026-10-14T16:10:00Z" }
+  "createdAt": { "$date": "2026-10-14T16:10:00Z" }
 }
 ```
 
----
-
-### 2.4 Collection `tasks` (Tâches & Vue Kanban)
-Éléments unitaires de travail affichés en colonnes Kanban.
+### 2.4 Collection `tasks` (Tâches & Tableau Kanban)
+Unités de travail visualisables et déplaçables au sein du tableau Kanban.
 
 ```json
 {
@@ -100,77 +78,42 @@ Cadre organisationnel regroupant les membres assignés et les tâches associées
   "companyId": { "$oid": "670d1a000000000000000001" },
   "projectId": { "$oid": "670d1c000000000000000020" },
   "assigneeId": { "$oid": "670d1b000000000000000010" },
-  "createdBy": { "$oid": "670d1b000000000000000010" },
-  "title": "Configurer le Replica Set MongoDB",
-  "description": "Préparer les scripts d'initialisation rs.initiate() et le fichier compose",
-  "status": "IN_PROGRESS",
-  "priority": "HIGH",
-  "position": 1024.0,
-  "tags": ["Database", "DevOps", "Infrastructure"],
+  "title": "Définir la Shard Key {companyId: 1}",
+  "description": "Assurer la colocalisation des documents par entreprise sur le cluster",
+  "status": "DONE",
+  "priority": "CRITICAL",
+  "tags": ["Database", "MongoDB", "Architecture"],
   "dueDate": { "$date": "2026-10-25T00:00:00Z" },
-  "createdAt": { "$date": "2026-10-14T16:15:00Z" },
-  "updatedAt": { "$date": "2026-10-15T09:30:00Z" }
-}
-```
-
-> [!NOTE]
-> **Champ `position: 1024.0` (Tri fractionnel)** : Permet de gérer le réordonnancement par *drag-and-drop* dans les colonnes Kanban en calculant une valeur médiane sans réécrire l'ensemble des tâches de la colonne.
-
----
-
-### 2.5 Collection `audit_logs` (Traçabilité & Sécurité)
-Historique immuable des actions critiques pour répondre aux exigences SaaS d'audit.
-
-```json
-{
-  "_id": { "$oid": "670d1e000000000000000040" },
-  "companyId": { "$oid": "670d1a000000000000000001" },
-  "userId": { "$oid": "670d1b000000000000000010" },
-  "action": "UPDATE",
-  "entityType": "TASK",
-  "entityId": { "$oid": "670d1d000000000000000030" },
-  "changes": {
-    "field": "status",
-    "oldValue": "TODO",
-    "newValue": "IN_PROGRESS"
-  },
-  "ipAddress": "192.168.1.45",
-  "createdAt": { "$date": "2026-10-15T09:30:00Z" }
+  "createdAt": { "$date": "2026-10-14T16:15:00Z" }
 }
 ```
 
 ---
 
-### 2.6 Collection `invitations` (Onboarding d'équipe)
-Gestion des tokens d'invitation temporaires pour rejoindre un tenant.
+## 3. Stratégie d'Indexation & Optimisation
 
-```json
-{
-  "_id": { "$oid": "670d1f000000000000000050" },
-  "companyId": { "$oid": "670d1a000000000000000001" },
-  "email": "dev@acme.io",
-  "role": "MEMBER",
-  "token": "4a5c6d7e8f901a2b3c4d5e6f",
-  "status": "PENDING",
-  "expiresAt": { "$date": "2026-10-21T16:00:00Z" },
-  "createdAt": { "$date": "2026-10-14T16:00:00Z" }
-}
-```
-
----
-
-## 3. Stratégie d'Indexation & Optimisation des Requêtes
-
-Les index appliquent systématiquement la **règle du préfixe `companyId`** afin de tirer pleinement parti des index locaux sur les shards et d'éviter les scans complets de collection.
+Les index respectent rigoureusement la **règle du préfixe `companyId`** afin de garantir des requêtes ciblées et d'éviter les scans complets de collection (*COLLSCAN*) :
 
 | Collection | Spécification de l'index | Rôle & Justification |
 | :--- | :--- | :--- |
-| **`companies`** | `{ "slug": 1 }` *(Unique)* | Résolution de l'URL du tenant / domaine d'accès. |
-| **`companies`** | `{ "siren": 1 }` *(Sparse, Unique)* | Déduplication légale des structures enregistrées. |
-| **`users`** | `{ "companyId": 1, "email": 1 }` *(Unique)* | Unicité de l'email au sein de chaque entreprise. |
-| **`projects`** | `{ "companyId": 1, "status": 1 }` | Filtrage rapide des projets actifs ou archivés par entreprise. |
-| **`projects`** | `{ "companyId": 1, "memberIds": 1 }` | Index multi-clé pour lister les projets assignés à un collaborateur précis. |
-| **`tasks`** | `{ "companyId": 1, "projectId": 1, "status": 1, "position": 1 }` | **Index composite couvrant** pour l'affichage instantané et le *drag & drop* Kanban. |
-| **`tasks`** | `{ "companyId": 1, "assigneeId": 1 }` | Vue transversale "Mes Tâches" par utilisateur. |
-| **`audit_logs`** | `{ "companyId": 1, "createdAt": -1 }` | Consultation chronologique décroissante de l'historique d'activité. |
-| **`invitations`** | `{ "token": 1 }` *(Unique)* <br> `{ "companyId": 1, "email": 1 }` | Validation des liens reçus par email et contrôle d'invitations en double. |
+| **`companies`** | `{ "_id": 1 }` *(Index primaire)* | Résolution directe et validation rapide de l'existence de l'entreprise. |
+| **`users`** | `{ "companyId": 1, "email": 1 }` *(Unique)* | Unicité de l'email au sein de chaque tenant (permet le même email dans deux entreprises différentes si nécessaire). |
+| **`projects`** | `{ "companyId": 1, "_id": 1 }` | Alignement avec la Shard Key cible pour un routage direct vers le shard de l'entreprise. |
+| **`tasks`** | `{ "companyId": 1, "projectId": 1, "status": 1 }` | Index composite couvrant pour charger instantanément les 4 colonnes Kanban d'un projet sans Scatter-Gather. |
+
+---
+
+## 4. Configuration Réseau & Transition vers la Partie II
+
+L'application s'appuie sur le fichier `config.env` :
+```env
+PORT=3000
+MONGO_URI=mongodb://mongodb:27017/nexusflow_saas?directConnection=true
+MONGO_MAX_POOL_SIZE=20
+MONGO_TIMEOUT_MS=5000
+```
+
+Pour la **Partie II (Sharding et Réplication)** :
+- La chaîne de connexion sera simplement mise à jour vers les routeurs `mongos` ou les replica sets :
+  `MONGO_URI=mongodb://mongos1:27017,mongos2:27017/nexusflow_saas?replicaSet=...`
+- **Aucune ligne de code source n'aura besoin d'être modifiée.**

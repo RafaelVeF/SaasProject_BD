@@ -1,37 +1,36 @@
-version: '3.8'
 services:
-  db:
-    image: mongo:6.0
-    container_name: saas_mongo
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password
-      - MONGO_INITDB_DATABASE=saas_db
+  mongodb:
+    image: mongo:7.0
+    container_name: nexusflow-mongodb
+    restart: unless-stopped
     volumes:
       - mongo_data:/data/db
+    networks:
+      - saas-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
-  backend:
-    build: ./backend
-    container_name: saas_backend
+  app:
+    build: .
+    container_name: nexusflow-app
+    restart: unless-stopped
     ports:
-      - "5000:5000"
-    environment:
-      - MONGO_URI=${MONGO_URI:-mongodb://admin:password@db:27017/saas_db?authSource=admin}
-      - PORT=${PORT:-5000}
+      - "3000:3000"
+    env_file:
+      - config.env
     depends_on:
-      - db
-
-  frontend:
-    build: ./frontend
-    container_name: saas_frontend
-    ports:
-      - "5173:5173"
-    environment:
-      - VITE_API_URL=http://localhost:5000
-    depends_on:
-      - backend
+      mongodb:
+        condition: service_healthy
+    networks:
+      - saas-network
 
 volumes:
   mongo_data:
+
+networks:
+  saas-network:
+    driver: bridge
