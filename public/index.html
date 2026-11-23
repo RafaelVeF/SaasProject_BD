@@ -291,7 +291,14 @@
                 <div id="viewKanbanContainer" class="flex-1 flex flex-col">
                     <div class="flex flex-wrap items-center gap-3 mb-4">
                         <label for="taskSearch" class="sr-only">Rechercher par titre ou tag</label>
-                        <input id="taskSearch" type="search" oninput="renderKanban()" placeholder="Rechercher par titre ou tag…" class="w-full sm:max-w-sm bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+                        <input id="taskSearch" type="search" oninput="renderKanban()" placeholder="Rechercher par titre ou tag…" class="w-full sm:max-w-sm bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition">
+                        <label class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 px-3 py-2 rounded-xl cursor-pointer select-none hover:border-blue-500 transition">
+                            <input id="filterOverdue" type="checkbox" onchange="renderKanban()" class="rounded text-rose-600 focus:ring-0">
+                            <span>En retard uniquement</span>
+                        </label>
+                        <button id="resetFiltersBtn" type="button" onclick="resetFilters()" class="hidden text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline px-2 py-1">
+                            Réinitialiser les filtres
+                        </button>
                         <span id="searchResultCount" class="text-xs text-slate-500 dark:text-slate-400" role="status"></span>
                     </div>
                     <div id="kanbanBoard" class="grid grid-cols-1 md:grid-cols-4 gap-5 flex-1 min-h-[58vh]">
@@ -665,6 +672,7 @@
             tasks = [];
             document.getElementById('filterAssignee').value = '';
             document.getElementById('filterPriority').value = '';
+            document.getElementById('filterOverdue').checked = false;
             document.getElementById('taskSearch').value = '';
             document.getElementById('projectScope').value = 'active';
             renderCurrentView();
@@ -874,22 +882,30 @@
                 return;
             }
 
+            const queryFilter = document.getElementById('taskSearch').value;
             const assigneeFilter = document.getElementById('filterAssignee').value;
             const priorityFilter = document.getElementById('filterPriority').value;
+            const overdueFilter = Boolean(document.getElementById('filterOverdue').checked);
+
+            const hasActiveFilters = Boolean(queryFilter.trim() || assigneeFilter || priorityFilter || overdueFilter);
+            document.getElementById('resetFiltersBtn').classList.toggle('hidden', !hasActiveFilters);
 
             const filteredTasks = TaskTools.filterTasks(tasks, {
-                query: document.getElementById('taskSearch').value,
+                query: queryFilter,
                 assignee: assigneeFilter,
-                priority: priorityFilter
+                priority: priorityFilter,
+                overdueOnly: overdueFilter
             });
             document.getElementById('searchResultCount').textContent = `${filteredTasks.length} tâche(s) sur ${tasks.length}`;
 
             board.innerHTML = COLUMNS.map(col => {
                 const colTasks = filteredTasks.filter(t => t.status === col.id);
                 return `
-                    <div class="bg-white/70 dark:bg-anthracite-900/40 border border-slate-200 dark:border-anthracite-700/80 rounded-3xl p-4 flex flex-col kanban-col shadow-sm"
-                         ondragover="event.preventDefault()"
-                         ondrop="dropTask(event, '${col.id}')">
+                    <div class="bg-white/70 dark:bg-anthracite-900/40 border border-slate-200 dark:border-anthracite-700/80 rounded-3xl p-4 flex flex-col kanban-col shadow-sm transition-all"
+                         data-status="${col.id}"
+                         ondragover="dragOverCol(event, this)"
+                         ondragleave="dragLeaveCol(event, this)"
+                         ondrop="dropTask(event, '${col.id}', this)">
                         <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200 dark:border-anthracite-700/60">
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full ${col.badge}"></span>
@@ -908,7 +924,7 @@
                                 const commentCount = (t.comments || []).length;
 
                                 return `
-                                    <div draggable="true" ondragstart="dragTask(event, '${t._id}')"
+                                    <div draggable="true" ondragstart="dragTask(event, '${t._id}')" ondragend="endDragTask(event)"
                                          class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700/80 hover:border-blue-500/80 rounded-2xl p-4 shadow-sm hover:shadow transition cursor-grab active:cursor-grabbing">
                                         <div class="flex justify-between items-start gap-2 mb-2">
                                             <span class="text-[10px] px-2 py-0.5 rounded-lg uppercase tracking-wider ${PRIORITY_STYLE[t.priority] || PRIORITY_STYLE.MEDIUM}">
@@ -957,7 +973,7 @@
                                         </div>
                                     </div>
                                 `;
-                            }).join('')}
+                            }).join('') || `<p class="text-xs text-slate-400 dark:text-slate-500 italic text-center py-6 border border-dashed border-slate-200 dark:border-anthracite-700/60 rounded-2xl">Aucune tâche</p>`}
                         </div>
                     </div>
                 `;
@@ -1076,18 +1092,47 @@
             }).join('');
         }
 
+        function resetFilters() {
+            document.getElementById('taskSearch').value = '';
+            document.getElementById('filterAssignee').value = '';
+            document.getElementById('filterPriority').value = '';
+            document.getElementById('filterOverdue').checked = false;
+            renderKanban();
+        }
+
         // DRAG & DROP
         let draggedTaskId = null;
         function dragTask(ev, taskId) {
             draggedTaskId = taskId;
-            ev.dataTransfer.setData('text/plain', taskId);
+            ev.currentTarget?.classList?.add('dragging');
+            ev.dataTransfer?.setData('text/plain', taskId);
         }
 
-        async function dropTask(ev, newStatus) {
-            ev.preventDefault();
-            if (!draggedTaskId) return;
-            await changeTaskStatus(draggedTaskId, newStatus);
+        function endDragTask(ev) {
+            ev.currentTarget?.classList?.remove('dragging');
             draggedTaskId = null;
+            document.querySelectorAll?.('.kanban-col').forEach(col => col.classList.remove('ring-2', 'ring-blue-500/60'));
+        }
+
+        function dragOverCol(ev, colEl) {
+            ev.preventDefault();
+            colEl?.classList?.add('ring-2', 'ring-blue-500/60');
+        }
+
+        function dragLeaveCol(ev, colEl) {
+            if (!colEl || (ev.relatedTarget && colEl.contains?.(ev.relatedTarget))) return;
+            colEl.classList?.remove('ring-2', 'ring-blue-500/60');
+        }
+
+        async function dropTask(ev, newStatus, colEl) {
+            ev.preventDefault();
+            colEl?.classList?.remove('ring-2', 'ring-blue-500/60');
+            if (!draggedTaskId) return;
+            const taskId = draggedTaskId;
+            draggedTaskId = null;
+            const existing = tasks.find(t => t._id === taskId);
+            if (!existing || existing.status === newStatus) return;
+            await changeTaskStatus(taskId, newStatus);
         }
 
         async function changeTaskStatus(taskId, status) {

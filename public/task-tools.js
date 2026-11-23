@@ -1,11 +1,12 @@
 (function (root) {
     const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    function filterTasks(tasks, { query = '', priority = '', assignee = '' } = {}) {
+    function filterTasks(tasks, { query = '', priority = '', assignee = '', overdueOnly = false, today } = {}) {
         const term = normalize(query.trim());
         return tasks.filter(task => {
             const members = task.assigneeIds?.length ? task.assigneeIds : [task.assigneeId].filter(Boolean);
             return (!priority || task.priority === priority) &&
                 (!assignee || members.some(member => String(member._id || member) === assignee)) &&
+                (!overdueOnly || isOverdue(task, today)) &&
                 (!term || normalize([task.title, ...(task.tags || [])].join(' ')).includes(term));
         });
     }
