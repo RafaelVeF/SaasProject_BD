@@ -20,10 +20,14 @@ Les modifications restent dans l'architecture Express, Mongoose et JavaScript ex
 
 Ces tests ne remplacent pas une vérification visuelle dans un navigateur ni des tests d'intégration avec MongoDB réel.
 
-## Cinq fonctionnalités proposées, non implémentées
+## Fonctionnalités livrées depuis cette correction
 
 1. Recherche des tâches par titre et tags.
 2. Échéances et indicateurs de retard.
 3. Historique des changements d'une tâche.
 4. Archivage et restauration des projets terminés.
 5. Notifications d'assignation et de nouveaux commentaires.
+
+Ces cinq fonctionnalités ont été livrées dans la PR #6, après les dialogues harmonisés de la PR #5. La liste ci-dessus n'est plus un backlog. Les archives restent modifiables ; les notifications sont internes, actualisées à l'ouverture, sans livraison garantie après panne.
+
+Voir [le README](../README.md), [le guide de test](TESTING.md) et [la référence API](API.md) pour l'état actuel. Les plans sous `docs/superpowers/` restent des documents historiques ; leurs cases ne constituent pas un statut de livraison.
