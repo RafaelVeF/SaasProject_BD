@@ -179,6 +179,9 @@
                 </button>
 
                 <!-- PROFIL UTILISATEUR & CHANGEMENT DE COMPTE -->
+                <button id="notificationsButton" onclick="openNotifications()" class="text-xs bg-slate-100 dark:bg-anthracite-800 border border-slate-200 dark:border-anthracite-700 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200" aria-label="Ouvrir les notifications">
+                    Notifications <span id="notificationCount" class="font-bold text-blue-600 dark:text-blue-400" aria-live="polite">0</span>
+                </button>
                 <div class="flex items-center gap-2 border-l border-slate-200 dark:border-anthracite-700 pl-3 ml-1">
                     <div id="currentUserAvatar" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow bg-blue-600">
                         ?
@@ -212,6 +215,11 @@
                             + Projet
                         </button>
                     </div>
+                    <label for="projectScope" class="sr-only">Projets actifs ou archivés</label>
+                    <select id="projectScope" onchange="renderProjectList()" class="w-full mb-3 text-xs rounded-xl px-3 py-2 bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 text-slate-700 dark:text-slate-200">
+                        <option value="active">Projets actifs</option>
+                        <option value="archived">Projets archivés</option>
+                    </select>
                     <div id="projectList" class="space-y-2">
                         <!-- Injecté dynamiquement -->
                     </div>
@@ -281,6 +289,11 @@
 
                 <!-- VUE 1 : TABLEAU KANBAN -->
                 <div id="viewKanbanContainer" class="flex-1 flex flex-col">
+                    <div class="flex flex-wrap items-center gap-3 mb-4">
+                        <label for="taskSearch" class="sr-only">Rechercher par titre ou tag</label>
+                        <input id="taskSearch" type="search" oninput="renderKanban()" placeholder="Rechercher par titre ou tag…" class="w-full sm:max-w-sm bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+                        <span id="searchResultCount" class="text-xs text-slate-500 dark:text-slate-400" role="status"></span>
+                    </div>
                     <div id="kanbanBoard" class="grid grid-cols-1 md:grid-cols-4 gap-5 flex-1 min-h-[58vh]">
                         <!-- Colonnes injectées -->
                     </div>
@@ -396,7 +409,29 @@
             </div>
         </div>
     </dialog>
+    <dialog id="activityDialog" class="app-dialog" aria-labelledby="activityTitle">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3 id="activityTitle" class="dialog-title">Historique de la tâche</h3>
+                <button class="dialog-button dialog-close" onclick="document.getElementById('activityDialog').close()" aria-label="Fermer l’historique">Fermer</button>
+            </div>
+            <div id="activityList" class="space-y-3"></div>
+        </div>
+    </dialog>
+    <dialog id="notificationsDialog" class="app-dialog" aria-labelledby="notificationsTitle">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3 id="notificationsTitle" class="dialog-title">Notifications</h3>
+                <button class="dialog-button dialog-close" onclick="document.getElementById('notificationsDialog').close()">Fermer</button>
+            </div>
+            <button onclick="markAllNotificationsRead()" class="dialog-button mb-4">Tout marquer comme lu</button>
+            <p class="dialog-message mb-4">100 notifications récentes. Actualisées à chaque ouverture.</p>
+            <div id="notificationsList" class="space-y-3" aria-live="polite"></div>
+        </div>
+    </dialog>
     <script src="/dialogs.js"></script>
+    <script src="/task-tools.js"></script>
+    <script src="/productivity.js"></script>
 
     <!-- ========================================== -->
     <!-- LOGIQUE JAVASCRIPT & ÉTATS DE L'APPLICATION -->
@@ -618,18 +653,27 @@
             currentProject = null;
             tasks = [];
             document.getElementById('filterPriority').value = '';
+            document.getElementById('taskSearch').value = '';
+            document.getElementById('projectScope').value = 'active';
             renderCurrentView();
             renderCompanySelect();
             await Promise.all([loadUsers(), loadProjects()]);
-            if (projects.length > 0) {
-                await selectProject(projects[0]._id);
+            if (companyId !== currentCompanyId) return;
+            const firstActive = projects.find(project => !project.archived);
+            if (firstActive) {
+                await selectProject(firstActive._id);
             } else {
                 renderCurrentView();
             }
+            void refreshNotifications();
         }
 
         async function loadUsers() {
-            users = await api('/api/users');
+            const companyId = currentCompanyId;
+            const companyUsers = await api('/api/users');
+            if (companyId !== currentCompanyId) return;
+            users = companyUsers;
+            if (users.length === 0) currentUserId = null;
             if (users.length > 0 && (!currentUserId || !users.some(u => u._id === currentUserId))) {
                 currentUserId = users[0]._id;
             }
@@ -669,7 +713,12 @@
 
         function renderUserSession() {
             const current = users.find(u => u._id === currentUserId) || users[0];
-            if (!current) return;
+            if (!current) {
+                document.getElementById('currentUserAvatar').textContent = '?';
+                document.getElementById('currentUserName').textContent = 'Aucun collaborateur';
+                document.getElementById('userSessionSelect').innerHTML = '';
+                return;
+            }
             const avatar = document.getElementById('currentUserAvatar');
             avatar.style.backgroundColor = current.avatarColor || '#3b82f6';
             avatar.textContent = current.name ? current.name.substring(0, 2).toUpperCase() : '?';
@@ -689,23 +738,33 @@
                 localStorage.setItem('nexusflow_auth', JSON.stringify(currentUserSession));
             }
             renderUserSession();
+            void refreshNotifications();
+        }
+        async function loadProjects() {
+            const companyId = currentCompanyId;
+            const companyProjects = await api('/api/projects');
+            if (companyId !== currentCompanyId) return;
+            projects = companyProjects;
+            renderProjectList();
         }
 
-        async function loadProjects() {
-            projects = await api('/api/projects');
+        function renderProjectList() {
             const container = document.getElementById('projectList');
-            if (projects.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 italic">Aucun projet créé pour l'instant.</p>`;
+            const archived = document.getElementById('projectScope').value === 'archived';
+            const visibleProjects = projects.filter(project => Boolean(project.archived) === archived);
+            if (visibleProjects.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic">${archived ? 'Aucun projet archivé.' : 'Aucun projet actif.'}</p>`;
                 return;
             }
 
-            container.innerHTML = projects.map(p => {
+            container.innerHTML = visibleProjects.map(p => {
                 const active = currentProject && currentProject._id === p._id;
                 return `
                     <div onclick="selectProject('${p._id}')" class="cursor-pointer p-3 rounded-2xl border transition shadow-sm ${active ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-500/80 shadow' : 'bg-white dark:bg-anthracite-900/40 border-slate-200 dark:border-anthracite-700/60 hover:border-slate-300 dark:hover:border-anthracite-600'}">
                         <div class="flex justify-between items-start">
                             <span class="font-bold text-sm ${active ? 'text-blue-700 dark:text-blue-200' : 'text-slate-800 dark:text-slate-200'}">${p.name}</span>
                             <div class="flex items-center gap-1">
+                                <button onclick="event.stopPropagation(); toggleProjectArchive('${p._id}')" class="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 p-1 rounded" title="${p.archived ? 'Restaurer le projet' : 'Archiver le projet'}">${p.archived ? 'Restaurer' : 'Archiver'}</button>
                                 <button onclick="event.stopPropagation(); openEditProjectModal('${p._id}')" class="text-slate-400 hover:text-blue-600 p-1 rounded hover:bg-slate-100 dark:hover:bg-anthracite-800 transition" title="Modifier le projet">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                 </button>
@@ -731,10 +790,10 @@
         async function selectProject(projectId) {
             const requestVersion = ++projectRequestVersion;
             currentProject = projects.find(p => p._id === projectId) || null;
-            loadProjects();
+            renderProjectList();
             if (!currentProject) return;
 
-            document.getElementById('activeProjectTitle').textContent = currentProject.name;
+            document.getElementById('activeProjectTitle').textContent = currentProject.name + (currentProject.archived ? ' — Archivé' : '');
             document.getElementById('activeProjectDesc').textContent = currentProject.description || 'Espace de collaboration et suivi';
             document.getElementById('viewTabs').classList.remove('hidden');
             document.getElementById('kanbanControls').classList.remove('hidden');
@@ -806,15 +865,12 @@
             const assigneeFilter = document.getElementById('filterAssignee').value;
             const priorityFilter = document.getElementById('filterPriority').value;
 
-            const filteredTasks = tasks.filter(t => {
-                if (assigneeFilter) {
-                    const hasAssignee = (t.assigneeIds && t.assigneeIds.some(a => (a._id || a) === assigneeFilter)) ||
-                                        (t.assigneeId && (t.assigneeId._id || t.assigneeId) === assigneeFilter);
-                    if (!hasAssignee) return false;
-                }
-                if (priorityFilter && t.priority !== priorityFilter) return false;
-                return true;
+            const filteredTasks = TaskTools.filterTasks(tasks, {
+                query: document.getElementById('taskSearch').value,
+                assignee: assigneeFilter,
+                priority: priorityFilter
             });
+            document.getElementById('searchResultCount').textContent = `${filteredTasks.length} tâche(s) sur ${tasks.length}`;
 
             board.innerHTML = COLUMNS.map(col => {
                 const colTasks = filteredTasks.filter(t => t.status === col.id);
@@ -847,6 +903,7 @@
                                                 ${t.priority}
                                             </span>
                                             <div class="flex gap-1 items-center">
+                                                <button onclick="openTaskHistory('${t._id}')" class="text-xs text-slate-500 dark:text-slate-400 p-1 hover:text-blue-600" title="Historique de la tâche" aria-label="Historique de la tâche">Historique</button>
                                                 <button onclick="openChatModal('${t._id}')" class="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 flex items-center gap-1 bg-slate-50 dark:bg-anthracite-900 px-2 py-1 rounded-lg border border-slate-200 dark:border-anthracite-700 transition" title="Discussion / Commentaires">
                                                     <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                                                     <span class="text-[10px] font-bold">${commentCount}</span>
@@ -861,6 +918,7 @@
                                         </div>
 
                                         <h4 class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">${t.title}</h4>
+                                        ${t.dueDate ? `<p class="text-xs mb-2 ${TaskTools.isOverdue(t) ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-slate-400'}">${TaskTools.isOverdue(t) ? 'En retard · ' : 'Échéance · '}${escapeText(String(t.dueDate).slice(0, 10))}</p>` : ''}
                                         ${t.description ? `<p class="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">${t.description}</p>` : ''}
 
                                         <div class="flex flex-wrap gap-1 mb-3">
@@ -1110,6 +1168,7 @@
             if (idx !== -1) tasks[idx] = updated;
             renderChatMessages(updated.comments || []);
             renderKanban();
+            void refreshNotifications();
         }
 
         // MODALES CRUD
@@ -1357,6 +1416,10 @@
 
             showModal(existing ? 'Modifier la Tâche' : 'Créer une Tâche', `
                 <div>
+                    <label for="taskDueDate" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Échéance (facultative)</label>
+                    <input id="taskDueDate" name="dueDate" type="date" value="${existing?.dueDate ? escapeText(String(existing.dueDate).slice(0, 10)) : ''}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+                </div>
+                <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Titre de la tâche</label>
                     <input name="title" required value="${existing ? existing.title : ''}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
@@ -1395,6 +1458,7 @@
                     description: fd.get('description'),
                     status: fd.get('status'),
                     priority: fd.get('priority'),
+                    dueDate: fd.get('dueDate') || null,
                     assigneeIds: assigneeIds,
                     assigneeId: assigneeIds[0] || null,
                     tags: fd.get('tags').split(',').map(s => s.trim()).filter(Boolean)

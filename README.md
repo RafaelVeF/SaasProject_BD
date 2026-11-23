@@ -36,6 +36,27 @@ Au premier chargement, deux entreprises de démonstration sont injectées automa
 
 ## Fonctionnalités Implémentées
 
+### Productivité et suivi
+
+- **Recherche** : champ au-dessus du Kanban, par titre ou tag, insensible aux accents et à la casse ; combinable avec les filtres de membre et de priorité.
+- **Échéances** : date facultative dans le formulaire de tâche, visible sur la carte. Le badge « En retard » apparaît à partir du lendemain de l'échéance, sauf si la tâche est terminée.
+- **Historique** : bouton sur chaque carte pour consulter création, modifications et commentaires avec date et auteur. Les anciennes tâches commencent leur historique à leur prochaine modification.
+- **Archives** : actions Archiver/Restaurer dans la liste des projets et sélecteur actifs/archivés. Les tâches sont conservées ; un projet archivé reste consultable et modifiable.
+- **Notifications internes** : assignations et commentaires dans la boîte de l'utilisateur sélectionné ; compteur de non-lus, marquage individuel à l'ouverture, action « Tout marquer comme lu » et accès à la tâche.
+
+La boîte affiche les 100 notifications les plus récentes, et le compteur couvre toutes les non-lues. Elle s'actualise à l'ouverture et au changement d'utilisateur ou d'entreprise, sans push ni e-mail. La livraison des notifications est secondaire : en cas d'échec MongoDB après sauvegarde de la tâche, l'échec est journalisé, sans annuler la modification ni garantir une relivraison.
+
+L'identité utilise encore les en-têtes de démonstration `X-Company-Id` et `X-User-Id`. Leur validation d'appartenance ne remplace pas une session serveur authentifiée.
+
+Vérifications :
+
+```bash
+npm test
+node tests/productivity.integration.js
+```
+
+Le second test nécessite l'application et MongoDB en fonctionnement. Il crée deux entreprises temporaires et ne supprime que celles-ci dans son nettoyage ; il ne réinitialise jamais la démonstration.
+
 - **Isolation Logicielle Stricte (*Shared Database, Shared Schema*)** :
   - Clé de partitionnement `companyId` présente au premier niveau de chaque document (`users`, `projects`, `tasks`).
   - Filtrage systématique par middleware sur le header `X-Company-Id`.

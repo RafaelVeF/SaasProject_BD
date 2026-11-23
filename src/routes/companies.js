@@ -51,6 +51,7 @@ router.delete('/:id', async (req, res) => {
             Task.deleteMany({ companyId }),
             Project.deleteMany({ companyId }),
             User.deleteMany({ companyId }),
+            require('../models/Notification').deleteMany({ companyId }),
             Company.findByIdAndDelete(companyId)
         ]);
         res.json({ message: "Entreprise et toutes ses données isolées supprimées." });

@@ -65,6 +65,7 @@ router.delete('/:id', async (req, res) => {
 
         await Promise.all([
             Project.updateMany({ companyId: req.companyId }, { $pull: { memberIds: userId } }),
+            require('../models/Notification').deleteMany({ companyId: req.companyId, userId }),
             Task.updateMany({ companyId: req.companyId, assigneeId: userId }, { $set: { assigneeId: null } }),
             Task.updateMany({ companyId: req.companyId }, { $pull: { assigneeIds: userId } })
         ]);
