@@ -253,16 +253,16 @@
                     </div>
 
                     <!-- Navigation par onglets -->
-                    <div id="viewTabs" class="hidden flex items-center bg-slate-200/80 dark:bg-anthracite-850 p-1 rounded-2xl border border-slate-300 dark:border-anthracite-700">
-                        <button id="tabKanban" onclick="switchView('kanban')" class="text-xs font-bold px-4 py-2 rounded-xl bg-blue-600 text-white transition flex items-center gap-1.5 shadow">
+                    <div id="viewTabs" role="tablist" aria-label="Vues du projet" class="hidden flex items-center bg-slate-200/80 dark:bg-anthracite-850 p-1 rounded-2xl border border-slate-300 dark:border-anthracite-700">
+                        <button id="tabKanban" role="tab" aria-selected="true" onclick="switchView('kanban')" class="text-xs font-bold px-4 py-2 rounded-xl bg-blue-600 text-white transition flex items-center gap-1.5 shadow">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
                             <span>Kanban</span>
                         </button>
-                        <button id="tabDashboard" onclick="switchView('dashboard')" class="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                        <button id="tabDashboard" role="tab" aria-selected="false" onclick="switchView('dashboard')" class="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                             <span>Tableau de bord</span>
                         </button>
-                        <button id="tabTeam" onclick="switchView('team')" class="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                        <button id="tabTeam" role="tab" aria-selected="false" onclick="switchView('team')" class="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                             <span>Équipe</span>
                         </button>
@@ -308,7 +308,7 @@
 
                 <!-- VUE 2 : TABLEAU DE BORD (DASHBOARD) -->
                 <div id="viewDashboardContainer" class="hidden flex-1 flex-col gap-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                         <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 p-5 rounded-3xl shadow-sm">
                             <div class="text-xs uppercase font-bold text-slate-400">Total des Tâches</div>
                             <div id="kpiTotal" class="text-3xl font-black text-slate-900 dark:text-white mt-2">0</div>
@@ -329,9 +329,14 @@
                             <div id="kpiCritical" class="text-3xl font-black text-rose-600 dark:text-rose-300 mt-2">0</div>
                             <div class="text-[11px] text-slate-500 mt-1">Nécessitent une action rapide</div>
                         </div>
+                        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 p-5 rounded-3xl shadow-sm">
+                            <div class="text-xs uppercase font-bold text-amber-600 dark:text-amber-400">En retard</div>
+                            <div id="kpiOverdue" class="text-3xl font-black text-amber-600 dark:text-amber-300 mt-2">0</div>
+                            <div class="text-[11px] text-slate-500 mt-1">Échéance dépassée (hors terminées)</div>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-3xl p-6 shadow-sm">
                             <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -346,6 +351,14 @@
                                 <span>Charge de Travail par Collaborateur</span>
                             </h3>
                             <div id="workloadBars" class="space-y-3.5"></div>
+                        </div>
+
+                        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-3xl p-6 shadow-sm">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+                                <span>Répartition par Statut</span>
+                            </h3>
+                            <div id="statusBars" class="space-y-3.5"></div>
                         </div>
                     </div>
                 </div>
@@ -832,6 +845,7 @@
             ['kanban', 'dashboard', 'team'].forEach(v => {
                 const btn = document.getElementById('tab' + v.charAt(0).toUpperCase() + v.slice(1));
                 const container = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Container');
+                btn.setAttribute?.('aria-selected', v === viewName ? 'true' : 'false');
                 if (v === viewName) {
                     btn.className = "text-xs font-bold px-4 py-2 rounded-xl bg-blue-600 text-white transition flex items-center gap-1.5 shadow";
                     container.classList.remove('hidden');
@@ -990,6 +1004,7 @@
             const done = tasks.filter(t => t.status === 'DONE').length;
             const active = tasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'REVIEW').length;
             const critical = tasks.filter(t => t.priority === 'CRITICAL').length;
+            const overdue = tasks.filter(t => TaskTools.isOverdue(t)).length;
             const percent = total > 0 ? Math.round((done / total) * 100) : 0;
 
             document.getElementById('kpiTotal').textContent = total;
@@ -997,6 +1012,7 @@
             document.getElementById('kpiDonePercent').textContent = `${percent}% de complétion`;
             document.getElementById('kpiActive').textContent = active;
             document.getElementById('kpiCritical').textContent = critical;
+            document.getElementById('kpiOverdue').textContent = overdue;
 
             const prioCounts = {
                 CRITICAL: tasks.filter(t => t.priority === 'CRITICAL').length,
@@ -1004,7 +1020,7 @@
                 MEDIUM: tasks.filter(t => t.priority === 'MEDIUM').length,
                 LOW: tasks.filter(t => t.priority === 'LOW').length
             };
-
+            const prioLabels = { CRITICAL: 'Critique', HIGH: 'Haute', MEDIUM: 'Moyenne', LOW: 'Basse' };
             const prioColors = {
                 CRITICAL: 'bg-rose-500',
                 HIGH: 'bg-amber-500',
@@ -1018,11 +1034,28 @@
                 return `
                     <div>
                         <div class="flex justify-between text-xs mb-1">
-                            <span class="text-slate-700 dark:text-slate-300 font-semibold">${key}</span>
+                            <span class="text-slate-700 dark:text-slate-300 font-semibold">${prioLabels[key] || key}</span>
                             <span class="text-slate-500 dark:text-slate-400 font-medium">${count} tâche(s) (${barPercent}%)</span>
                         </div>
                         <div class="w-full bg-slate-100 dark:bg-anthracite-900 rounded-full h-2.5 border border-slate-200 dark:border-anthracite-700">
                             <div class="${prioColors[key]} h-2.5 rounded-full transition-all duration-500" style="width: ${barPercent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const sContainer = document.getElementById('statusBars');
+            sContainer.innerHTML = COLUMNS.map(col => {
+                const count = tasks.filter(t => t.status === col.id).length;
+                const barPercent = total > 0 ? Math.round((count / total) * 100) : 0;
+                return `
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-700 dark:text-slate-300 font-semibold">${col.label}</span>
+                            <span class="text-slate-500 dark:text-slate-400 font-medium">${count} tâche(s) (${barPercent}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-anthracite-900 rounded-full h-2.5 border border-slate-200 dark:border-anthracite-700">
+                            <div class="${col.badge} h-2.5 rounded-full transition-all duration-500" style="width: ${barPercent}%"></div>
                         </div>
                     </div>
                 `;
