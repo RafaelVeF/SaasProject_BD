@@ -15,10 +15,15 @@ router.get('/', async (req, res) => {
     }
 });
 
+function companyPayload(body) {
+    const allowed = ['name', 'plan'];
+    return Object.fromEntries(allowed.filter(key => Object.hasOwn(body || {}, key)).map(key => [key, body[key]]));
+}
+
 // POST /api/companies - Créer une entreprise
 router.post('/', async (req, res) => {
     try {
-        const company = await Company.create(req.body);
+        const company = await Company.create(companyPayload(req.body));
         res.status(201).json(company);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -31,8 +36,11 @@ router.put('/:id', async (req, res) => {
         return res.status(400).json({ error: "Identifiant d'entreprise invalide." });
     }
     try {
-        delete req.body._id;
-        const company = await Company.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        const company = await Company.findByIdAndUpdate(
+            req.params.id,
+            companyPayload(req.body),
+            { new: true, runValidators: true }
+        );
         if (!company) return res.status(404).json({ error: "Entreprise introuvable." });
         res.json(company);
     } catch (err) {

@@ -17,18 +17,27 @@ router.get('/', async (req, res) => {
     }
 });
 
+function userPayload(body) {
+    const allowed = ['name', 'email', 'role', 'avatarColor'];
+    return Object.fromEntries(allowed.filter(key => Object.hasOwn(body || {}, key)).map(key => [key, body[key]]));
+}
+
 // POST /api/users - Ajouter un collaborateur
 router.post('/', async (req, res) => {
     try {
         const colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        const payload = userPayload(req.body);
         const user = await User.create({
-            ...req.body,
+            ...payload,
             companyId: req.companyId,
-            avatarColor: req.body.avatarColor || randomColor
+            avatarColor: payload.avatarColor || randomColor
         });
         res.status(201).json(user);
     } catch (err) {
+        if (err.code === 11000) {
+            return res.status(400).json({ error: "Un collaborateur avec cet email existe déjà dans cette entreprise." });
+        }
         res.status(400).json({ error: err.message });
     }
 });
@@ -39,16 +48,17 @@ router.put('/:id', async (req, res) => {
         return res.status(400).json({ error: "Identifiant utilisateur invalide." });
     }
     try {
-        delete req.body.companyId;
-        delete req.body._id;
         const user = await User.findOneAndUpdate(
             { _id: req.params.id, companyId: req.companyId },
-            req.body,
+            userPayload(req.body),
             { new: true, runValidators: true }
         );
         if (!user) return res.status(404).json({ error: "Utilisateur non trouvé dans cette entreprise." });
         res.json(user);
     } catch (err) {
+        if (err.code === 11000) {
+            return res.status(400).json({ error: "Un collaborateur avec cet email existe déjà dans cette entreprise." });
+        }
         res.status(400).json({ error: err.message });
     }
 });

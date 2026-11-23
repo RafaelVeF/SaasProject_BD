@@ -8,6 +8,16 @@ function taskPayload(body) {
     for (const key of editableFields) {
         if (Object.hasOwn(body, key)) payload[key] = body[key];
     }
+    if (Object.hasOwn(payload, 'tags')) {
+        payload.tags = Array.isArray(payload.tags)
+            ? [...new Set(payload.tags.map(tag => String(tag).trim()).filter(Boolean))]
+            : [];
+    }
+    if (Object.hasOwn(payload, 'assigneeIds')) {
+        payload.assigneeIds = Array.isArray(payload.assigneeIds)
+            ? [...new Set(payload.assigneeIds.filter(Boolean).map(String))]
+            : [];
+    }
     if (Object.hasOwn(payload, 'dueDate')) {
         if (payload.dueDate === '' || payload.dueDate === null) payload.dueDate = null;
         else {

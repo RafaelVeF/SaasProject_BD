@@ -22,15 +22,25 @@ router.get('/', async (req, res) => {
     }
 });
 
+function projectPayload(body) {
+    const allowed = ['name', 'description', 'memberIds', 'archived'];
+    const payload = Object.fromEntries(allowed.filter(key => Object.hasOwn(body || {}, key)).map(key => [key, body[key]]));
+    if (Array.isArray(payload.memberIds)) {
+        payload.memberIds = [...new Set(payload.memberIds.filter(Boolean).map(String))];
+    }
+    return payload;
+}
+
 // POST /api/projects - Créer un projet avec validation inter-tenant
 router.post('/', async (req, res) => {
     try {
-        if (req.body.memberIds && req.body.memberIds.length > 0) {
+        const payload = projectPayload(req.body);
+        if (payload.memberIds && payload.memberIds.length > 0) {
             const validMembers = await User.countDocuments({
-                _id: { $in: req.body.memberIds },
+                _id: { $in: payload.memberIds },
                 companyId: req.companyId
             });
-            if (validMembers !== req.body.memberIds.length) {
+            if (validMembers !== payload.memberIds.length) {
                 return res.status(403).json({
                     error: "Violation d'isolation : Utilisateur externe détecté dans l'équipe."
                 });
@@ -38,7 +48,7 @@ router.post('/', async (req, res) => {
         }
 
         const project = await Project.create({
-            ...req.body,
+            ...payload,
             companyId: req.companyId
         });
         const populated = await project.populate('memberIds', 'name email role avatarColor');
@@ -54,16 +64,13 @@ router.put('/:id', async (req, res) => {
         return res.status(400).json({ error: "Identifiant de projet invalide." });
     }
     try {
-        req.body = Object.fromEntries(['name', 'description', 'memberIds', 'archived']
-            .filter(key => Object.hasOwn(req.body, key)).map(key => [key, req.body[key]]));
-        delete req.body.companyId;
-        delete req.body._id;
-        if (req.body.memberIds && req.body.memberIds.length > 0) {
+        const payload = projectPayload(req.body);
+        if (payload.memberIds && payload.memberIds.length > 0) {
             const validMembers = await User.countDocuments({
-                _id: { $in: req.body.memberIds },
+                _id: { $in: payload.memberIds },
                 companyId: req.companyId
             });
-            if (validMembers !== req.body.memberIds.length) {
+            if (validMembers !== payload.memberIds.length) {
                 return res.status(403).json({
                     error: "Violation d'isolation : Utilisateur externe détecté dans l'équipe."
                 });
@@ -72,7 +79,7 @@ router.put('/:id', async (req, res) => {
 
         const project = await Project.findOneAndUpdate(
             { _id: req.params.id, companyId: req.companyId },
-            req.body,
+            payload,
             { new: true, runValidators: true }
         ).populate('memberIds', 'name email role avatarColor');
 
