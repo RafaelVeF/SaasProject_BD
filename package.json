@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "test:ui": "node --test tests/ui-*.test.js tests/popups.test.js tests/productivity-ui.test.js tests/frontend.test.js tests/workflows.test.js",
+    "test:api": "node --test tests/api.test.js tests/auth.test.js tests/models.test.js tests/routes-validation.test.js tests/productivity.test.js tests/security.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

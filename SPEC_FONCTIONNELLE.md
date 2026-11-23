@@ -67,9 +67,11 @@
   - **LOW** (Gris ardoise)
 - Système de tags personnalisables (ex. *#MongoDB, #DevOps, #Architecture, #UI*).
 
-### 4.4 Filtrage Dynamique en Temps Réel
+### 4.4 Filtrage Dynamique en Temps Réel & Raccourcis Clavier
 - **Filtre par membre assigné** : Affichage exclusif des tâches confiées à un collaborateur spécifique (ou vue globale *Tous les membres*).
 - **Filtre par priorité** : Affichage ciblé selon le degré d'urgence.
+- **Filtre « En retard uniquement » & Réinitialisation** : Case à cocher pour isoler les tâches dont l'échéance est dépassée (hors `DONE`), avec bouton « Réinitialiser les filtres » visible dès qu'un filtre est actif.
+- **Création rapide par colonne & Raccourcis** : Bouton `+` dans chaque en-tête de colonne pour pré-sélectionner le statut, et raccourcis clavier hors saisie/modale (`/` pour la recherche, `n` pour nouvelle tâche, `1`/`2`/`3` pour changer de vue).
 
 ### 4.5 Multi-Assignation de Collaborateurs
 - Chaque tâche supporte l'assignation simultanée de plusieurs collaborateurs de l'entreprise. Le formulaire propose les membres du projet, ou ceux de l'entreprise si le projet n'a pas de membres ; l'API vérifie l'entreprise, pas l'appartenance au projet.
@@ -81,7 +83,7 @@
 - Attribution automatique du message à l'utilisateur actif de la session.
 
 ### 4.7 Vues Spécialisées : Tableau de Bord & Équipe Projet
-- **Tableau de Bord (Dashboard Analytics)** : KPI en temps réel (total des tâches, pourcentage d'avancement, tâches actives, répartition par priorité et charge de travail par collaborateur).
+- **Tableau de Bord (Dashboard Analytics)** : KPI en temps réel (total des tâches, pourcentage d'avancement, tâches actives, priorité critique, tâches en retard), répartition par priorité, par statut et charge de travail par collaborateur.
 - **Vue Équipe (Team View)** : Récapitulatif des membres du projet, compétences/rôles et volume de tâches attribuées.
 
 ### 4.8 Jeu de Données de Démonstration (Seed 1-Clic)
