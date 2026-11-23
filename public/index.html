@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexusFlow SaaS – Gestion de Projet Multi-Tenant</title>
+    <link rel="stylesheet" href="/dialogs.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -344,28 +345,28 @@
     </div>
 
     <!-- MODALE GÉNÉRIQUE -->
-    <div id="modalOverlay" class="fixed inset-0 bg-black/60 dark:bg-black/80 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-3xl max-w-md w-full p-6 shadow-2xl">
+    <dialog id="modalOverlay" class="app-dialog" aria-labelledby="modalTitle">
+        <div class="dialog-content">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="modalTitle" class="text-lg font-black text-slate-900 dark:text-white"></h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-anthracite-700 transition" title="Fermer">
+                <button onclick="closeModal()" class="dialog-button dialog-close" title="Fermer" aria-label="Fermer le formulaire">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
             <form id="modalForm" class="space-y-4"></form>
         </div>
-    </div>
+    </dialog>
 
     <!-- MODALE DE DISCUSSION / CHAT DE TÂCHE -->
-    <div id="chatModalOverlay" class="fixed inset-0 bg-black/60 dark:bg-black/80 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-3xl max-w-xl w-full flex flex-col max-h-[85vh] shadow-2xl overflow-hidden">
+    <dialog id="chatModalOverlay" class="app-dialog chat-dialog" aria-labelledby="chatTaskTitle" aria-describedby="chatTaskDesc" onclose="activeChatTaskId = null">
+        <div class="flex flex-col overflow-hidden">
             <div class="p-5 border-b border-slate-200 dark:border-anthracite-700 flex justify-between items-start">
                 <div>
                     <div id="chatTaskPriority" class="inline-block text-[10px] px-2 py-0.5 rounded uppercase font-semibold mb-1"></div>
                     <h3 id="chatTaskTitle" class="text-base font-bold text-slate-900 dark:text-white"></h3>
                     <p id="chatTaskDesc" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"></p>
                 </div>
-                <button onclick="closeChatModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-anthracite-700 transition" title="Fermer">
+                <button onclick="closeChatModal()" class="dialog-button dialog-close" title="Fermer" aria-label="Fermer la discussion">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -375,13 +376,27 @@
 
             <!-- Formulaire d'envoi -->
             <form id="chatForm" onsubmit="sendComment(event)" class="p-4 border-t border-slate-200 dark:border-anthracite-700 bg-white dark:bg-anthracite-850 flex gap-2">
-                <input id="chatInput" type="text" placeholder="Ajouter une note ou un commentaire sur cette tâche..." required class="flex-1 bg-slate-100 dark:bg-anthracite-900 border border-slate-200 dark:border-anthracite-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-xs font-bold px-4 py-2.5 rounded-xl transition text-white shadow">
+                <input id="chatInput" type="text" aria-label="Votre commentaire" placeholder="Ajouter une note ou un commentaire sur cette tâche..." required class="flex-1 bg-slate-100 dark:bg-anthracite-900 border border-slate-200 dark:border-anthracite-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                <button type="submit" class="dialog-button dialog-primary">
                     Envoyer
                 </button>
             </form>
         </div>
-    </div>
+    </dialog>
+
+    <dialog id="noticeDialog" class="app-dialog" aria-labelledby="noticeTitle" aria-describedby="noticeMessage">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3 id="noticeTitle" class="dialog-title"></h3>
+            </div>
+            <p id="noticeMessage" class="dialog-message"></p>
+            <div class="dialog-actions">
+                <button id="noticeCancel" type="button" class="dialog-button">Annuler</button>
+                <button id="noticeAccept" type="button" class="dialog-button dialog-primary">Confirmer</button>
+            </div>
+        </div>
+    </dialog>
+    <script src="/dialogs.js"></script>
 
     <!-- ========================================== -->
     <!-- LOGIQUE JAVASCRIPT & ÉTATS DE L'APPLICATION -->
@@ -439,7 +454,7 @@
             const res = await fetch(url, { ...options, headers });
             if (!res.ok) {
                 const err = await res.json().catch(() => ({ error: 'Erreur réseau inconnue' }));
-                alert(err.error || 'Erreur lors de la requête API');
+                void showError(err.error || 'Erreur lors de la requête API');
                 throw new Error(err.error || 'API Error');
             }
             return res.json();
@@ -1028,15 +1043,14 @@
 
             renderChatMessages(task.comments || []);
             const overlay = document.getElementById('chatModalOverlay');
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
+            overlay.showModal();
+            document.getElementById('chatInput').focus();
         }
 
         function closeChatModal() {
             activeChatTaskId = null;
             const overlay = document.getElementById('chatModalOverlay');
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex');
+            overlay.close();
         }
 
         function renderChatMessages(comments) {
@@ -1103,11 +1117,11 @@
             document.getElementById('modalTitle').textContent = title;
             const form = document.getElementById('modalForm');
             form.innerHTML = formHtml + `
-                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-anthracite-700">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-xs bg-slate-100 hover:bg-slate-200 dark:bg-anthracite-800 dark:hover:bg-anthracite-700 text-slate-700 dark:text-slate-300 font-semibold transition">
+                <div class="dialog-actions">
+                    <button type="button" onclick="closeModal()" class="dialog-button">
                         Annuler
                     </button>
-                    <button type="submit" class="px-4 py-2 rounded-xl text-xs bg-blue-600 hover:bg-blue-500 font-bold text-white transition shadow">
+                    <button type="submit" class="dialog-button dialog-primary">
                         Enregistrer
                     </button>
                 </div>
@@ -1118,14 +1132,13 @@
                 closeModal();
             };
             const overlay = document.getElementById('modalOverlay');
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex');
+            overlay.showModal();
+            form.querySelector('input, textarea, select, button')?.focus();
         }
 
         function closeModal() {
             const overlay = document.getElementById('modalOverlay');
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex');
+            overlay.close();
         }
 
         function openCompanyModal() {
@@ -1406,7 +1419,7 @@
 
         async function deleteCurrentCompany() {
             if (!currentCompanyId) return;
-            if (!confirm("Supprimer définitivement cette entreprise et toutes ses données associées (utilisateurs, projets, tâches) ?")) return;
+            if (!await showConfirmation("Supprimer définitivement cette entreprise et toutes ses données associées (utilisateurs, projets, tâches) ?", { title: "Supprimer l’entreprise", destructive: true, acceptLabel: "Supprimer l’entreprise" })) return;
 
             await api(`/api/companies/${currentCompanyId}`, { method: 'DELETE' });
             companies = await api('/api/companies');
@@ -1418,7 +1431,7 @@
         }
 
         async function deleteUser(id) {
-            if (!confirm("Retirer ce collaborateur ?")) return;
+            if (!await showConfirmation("Retirer ce collaborateur de l’entreprise et désassigner ses tâches ?", { title: "Retirer le collaborateur", destructive: true, acceptLabel: "Retirer le collaborateur" })) return;
             await api(`/api/users/${id}`, { method: 'DELETE' });
             await loadUsers();
             if (currentProject) {
@@ -1429,7 +1442,7 @@
         }
 
         async function deleteProject(id) {
-            if (!confirm("Supprimer ce projet et toutes ses tâches ?")) return;
+            if (!await showConfirmation("Supprimer ce projet et toutes ses tâches ? Cette action est définitive.", { title: "Supprimer le projet", destructive: true, acceptLabel: "Supprimer le projet" })) return;
             await api(`/api/projects/${id}`, { method: 'DELETE' });
             await loadProjects();
             if (projects.length > 0) {
@@ -1442,14 +1455,14 @@
         }
 
         async function deleteTask(id) {
-            if (!confirm("Supprimer cette tâche ?")) return;
+            if (!await showConfirmation("Supprimer cette tâche et sa discussion ? Cette action est définitive.", { title: "Supprimer la tâche", destructive: true, acceptLabel: "Supprimer la tâche" })) return;
             await api(`/api/tasks/${id}`, { method: 'DELETE' });
             tasks = await api(`/api/projects/${currentProject._id}/tasks`);
             renderCurrentView();
         }
 
         async function seedDemoData(confirmPrompt = true) {
-            if (confirmPrompt && !confirm("Réinitialiser la base et charger les données de démonstration (Nebula Tech et GreenSolar Collectif) ?")) {
+            if (confirmPrompt && !await showConfirmation("Toutes les données seront remplacées par la démonstration (Nebula Tech et GreenSolar Collectif). Continuer ?", { title: "Réinitialiser la démonstration", destructive: true, acceptLabel: "Réinitialiser les données" })) {
                 return;
             }
             await fetch('/api/seed', { method: 'POST' });
