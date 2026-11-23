@@ -23,8 +23,11 @@ Cette commande exécute `tests/*.test.js` : modèles, middleware, structure, sé
 Tests ciblés :
 
 ```bash
+npm run test:ui
+npm run test:api
 node --test tests/popups.test.js
 node --test tests/productivity.test.js tests/productivity-ui.test.js
+node --test tests/routes-validation.test.js tests/ui-security.test.js tests/ui-ux.test.js
 node --test tests/workflows.test.js
 ```
 

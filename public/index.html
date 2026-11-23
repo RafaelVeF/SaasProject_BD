@@ -253,16 +253,16 @@
                     </div>
 
                     <!-- Navigation par onglets -->
-                    <div id="viewTabs" class="hidden flex items-center bg-slate-200/80 dark:bg-anthracite-850 p-1 rounded-2xl border border-slate-300 dark:border-anthracite-700">
-                        <button id="tabKanban" onclick="switchView('kanban')" class="text-xs font-bold px-4 py-2 rounded-xl bg-blue-600 text-white transition flex items-center gap-1.5 shadow">
+                    <div id="viewTabs" role="tablist" aria-label="Vues du projet" class="hidden flex items-center bg-slate-200/80 dark:bg-anthracite-850 p-1 rounded-2xl border border-slate-300 dark:border-anthracite-700">
+                        <button id="tabKanban" role="tab" aria-selected="true" onclick="switchView('kanban')" class="text-xs font-bold px-4 py-2 rounded-xl bg-blue-600 text-white transition flex items-center gap-1.5 shadow">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
                             <span>Kanban</span>
                         </button>
-                        <button id="tabDashboard" onclick="switchView('dashboard')" class="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                        <button id="tabDashboard" role="tab" aria-selected="false" onclick="switchView('dashboard')" class="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                             <span>Tableau de bord</span>
                         </button>
-                        <button id="tabTeam" onclick="switchView('team')" class="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
+                        <button id="tabTeam" role="tab" aria-selected="false" onclick="switchView('team')" class="text-xs font-bold px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                             <span>Équipe</span>
                         </button>
@@ -280,7 +280,7 @@
                             <option value="MEDIUM">Moyenne</option>
                             <option value="LOW">Basse</option>
                         </select>
-                        <button onclick="openTaskModal()" class="bg-blue-600 hover:bg-blue-500 text-sm font-bold text-white px-4 py-2 rounded-xl transition shadow-md shadow-blue-500/20 flex items-center gap-1.5">
+                        <button onclick="openTaskModal()" title="Raccourci : n" class="bg-blue-600 hover:bg-blue-500 text-sm font-bold text-white px-4 py-2 rounded-xl transition shadow-md shadow-blue-500/20 flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             <span>Nouvelle Tâche</span>
                         </button>
@@ -291,7 +291,14 @@
                 <div id="viewKanbanContainer" class="flex-1 flex flex-col">
                     <div class="flex flex-wrap items-center gap-3 mb-4">
                         <label for="taskSearch" class="sr-only">Rechercher par titre ou tag</label>
-                        <input id="taskSearch" type="search" oninput="renderKanban()" placeholder="Rechercher par titre ou tag…" class="w-full sm:max-w-sm bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+                        <input id="taskSearch" type="search" oninput="renderKanban()" title="Raccourci : /" placeholder="Rechercher par titre ou tag… ( / )" class="w-full sm:max-w-sm bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition">
+                        <label class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 px-3 py-2 rounded-xl cursor-pointer select-none hover:border-blue-500 transition">
+                            <input id="filterOverdue" type="checkbox" onchange="renderKanban()" class="rounded text-rose-600 focus:ring-0">
+                            <span>En retard uniquement</span>
+                        </label>
+                        <button id="resetFiltersBtn" type="button" onclick="resetFilters()" class="hidden text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline px-2 py-1">
+                            Réinitialiser les filtres
+                        </button>
                         <span id="searchResultCount" class="text-xs text-slate-500 dark:text-slate-400" role="status"></span>
                     </div>
                     <div id="kanbanBoard" class="grid grid-cols-1 md:grid-cols-4 gap-5 flex-1 min-h-[58vh]">
@@ -301,7 +308,7 @@
 
                 <!-- VUE 2 : TABLEAU DE BORD (DASHBOARD) -->
                 <div id="viewDashboardContainer" class="hidden flex-1 flex-col gap-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                         <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 p-5 rounded-3xl shadow-sm">
                             <div class="text-xs uppercase font-bold text-slate-400">Total des Tâches</div>
                             <div id="kpiTotal" class="text-3xl font-black text-slate-900 dark:text-white mt-2">0</div>
@@ -322,9 +329,14 @@
                             <div id="kpiCritical" class="text-3xl font-black text-rose-600 dark:text-rose-300 mt-2">0</div>
                             <div class="text-[11px] text-slate-500 mt-1">Nécessitent une action rapide</div>
                         </div>
+                        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 p-5 rounded-3xl shadow-sm">
+                            <div class="text-xs uppercase font-bold text-amber-600 dark:text-amber-400">En retard</div>
+                            <div id="kpiOverdue" class="text-3xl font-black text-amber-600 dark:text-amber-300 mt-2">0</div>
+                            <div class="text-[11px] text-slate-500 mt-1">Échéance dépassée (hors terminées)</div>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-3xl p-6 shadow-sm">
                             <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -339,6 +351,14 @@
                                 <span>Charge de Travail par Collaborateur</span>
                             </h3>
                             <div id="workloadBars" class="space-y-3.5"></div>
+                        </div>
+
+                        <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-3xl p-6 shadow-sm">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+                                <span>Répartition par Statut</span>
+                            </h3>
+                            <div id="statusBars" class="space-y-3.5"></div>
                         </div>
                     </div>
                 </div>
@@ -447,6 +467,17 @@
         let tasks = [];
         let currentView = 'kanban';
         let activeChatTaskId = null;
+
+        function escapeText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+        }
+
+        function safeColor(color) {
+            const raw = String(color || '').trim();
+            return /^#[0-9a-fA-F]{3,8}$/.test(raw) ? raw : '#3b82f6';
+        }
 
         const COLUMNS = [
             { id: 'TODO', label: 'À faire', badge: 'bg-slate-400 dark:bg-slate-500' },
@@ -642,7 +673,7 @@
         function renderCompanySelect() {
             const sel = document.getElementById('companySelect');
             sel.innerHTML = companies.map(c => `
-                <option value="${c._id}">${c.name} [${c.plan}]</option>
+                <option value="${escapeText(c._id)}">${escapeText(c.name)} [${escapeText(c.plan)}]</option>
             `).join('');
             if (currentCompanyId) sel.value = currentCompanyId;
         }
@@ -652,7 +683,9 @@
             currentCompanyId = companyId;
             currentProject = null;
             tasks = [];
+            document.getElementById('filterAssignee').value = '';
             document.getElementById('filterPriority').value = '';
+            document.getElementById('filterOverdue').checked = false;
             document.getElementById('taskSearch').value = '';
             document.getElementById('projectScope').value = 'active';
             renderCurrentView();
@@ -686,12 +719,12 @@
                 container.innerHTML = users.map(u => `
                     <div class="flex items-center justify-between bg-white dark:bg-anthracite-900/60 px-3 py-2 rounded-xl border border-slate-200 dark:border-anthracite-700/60 hover:border-slate-300 dark:hover:border-anthracite-600 transition shadow-sm">
                         <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow" style="background-color: ${u.avatarColor || '#3b82f6'}">
-                                ${u.name ? u.name.substring(0, 2).toUpperCase() : '??'}
+                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow" style="background-color: ${safeColor(u.avatarColor)}">
+                                ${escapeText(u.name ? u.name.substring(0, 2).toUpperCase() : '??')}
                             </div>
                             <div>
-                                <div class="text-sm font-semibold leading-tight text-slate-800 dark:text-slate-200">${u.name}</div>
-                                <div class="text-[11px] text-slate-500 dark:text-slate-400">${u.role} · ${u.email}</div>
+                                <div class="text-sm font-semibold leading-tight text-slate-800 dark:text-slate-200">${escapeText(u.name)}</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400">${escapeText(u.role)} · ${escapeText(u.email)}</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-1">
@@ -708,7 +741,7 @@
 
             const filterSel = document.getElementById('filterAssignee');
             filterSel.innerHTML = `<option value="">Tous les membres</option>` +
-                users.map(u => `<option value="${u._id}">${u.name}</option>`).join('');
+                users.map(u => `<option value="${escapeText(u._id)}">${escapeText(u.name)}</option>`).join('');
         }
 
         function renderUserSession() {
@@ -720,12 +753,12 @@
                 return;
             }
             const avatar = document.getElementById('currentUserAvatar');
-            avatar.style.backgroundColor = current.avatarColor || '#3b82f6';
+            avatar.style.backgroundColor = safeColor(current.avatarColor);
             avatar.textContent = current.name ? current.name.substring(0, 2).toUpperCase() : '?';
 
             document.getElementById('currentUserName').textContent = current.name;
             const sel = document.getElementById('userSessionSelect');
-            sel.innerHTML = users.map(u => `<option value="${u._id}" ${u._id === current._id ? 'selected' : ''}>${u.name}</option>`).join('');
+            sel.innerHTML = users.map(u => `<option value="${escapeText(u._id)}" ${u._id === current._id ? 'selected' : ''}>${escapeText(u.name)}</option>`).join('');
         }
 
         function switchCurrentUser(userId) {
@@ -762,7 +795,7 @@
                 return `
                     <div onclick="selectProject('${p._id}')" class="cursor-pointer p-3 rounded-2xl border transition shadow-sm ${active ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-500/80 shadow' : 'bg-white dark:bg-anthracite-900/40 border-slate-200 dark:border-anthracite-700/60 hover:border-slate-300 dark:hover:border-anthracite-600'}">
                         <div class="flex justify-between items-start">
-                            <span class="font-bold text-sm ${active ? 'text-blue-700 dark:text-blue-200' : 'text-slate-800 dark:text-slate-200'}">${p.name}</span>
+                            <span class="font-bold text-sm ${active ? 'text-blue-700 dark:text-blue-200' : 'text-slate-800 dark:text-slate-200'}">${escapeText(p.name)}</span>
                             <div class="flex items-center gap-1">
                                 <button onclick="event.stopPropagation(); toggleProjectArchive('${p._id}')" class="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 p-1 rounded" title="${p.archived ? 'Restaurer le projet' : 'Archiver le projet'}">${p.archived ? 'Restaurer' : 'Archiver'}</button>
                                 <button onclick="event.stopPropagation(); openEditProjectModal('${p._id}')" class="text-slate-400 hover:text-blue-600 p-1 rounded hover:bg-slate-100 dark:hover:bg-anthracite-800 transition" title="Modifier le projet">
@@ -773,11 +806,11 @@
                                 </button>
                             </div>
                         </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-1">${p.description || 'Sans description'}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-1">${escapeText(p.description || 'Sans description')}</p>
                         <div class="flex items-center -space-x-1 mt-2.5">
                             ${(p.memberIds || []).map(m => `
-                                <span title="${m.name || 'Membre'}" class="w-5 h-5 rounded-full text-[9px] font-bold flex items-center justify-center text-white border border-white dark:border-anthracite-950" style="background-color: ${m.avatarColor || '#3b82f6'}">
-                                    ${m.name ? m.name.substring(0, 2).toUpperCase() : '?'}
+                                <span title="${escapeText(m.name || 'Membre')}" class="w-5 h-5 rounded-full text-[9px] font-bold flex items-center justify-center text-white border border-white dark:border-anthracite-950" style="background-color: ${safeColor(m.avatarColor)}">
+                                    ${escapeText(m.name ? m.name.substring(0, 2).toUpperCase() : '?')}
                                 </span>
                             `).join('')}
                         </div>
@@ -812,6 +845,7 @@
             ['kanban', 'dashboard', 'team'].forEach(v => {
                 const btn = document.getElementById('tab' + v.charAt(0).toUpperCase() + v.slice(1));
                 const container = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1) + 'Container');
+                btn.setAttribute?.('aria-selected', v === viewName ? 'true' : 'false');
                 if (v === viewName) {
                     btn.className = "text-xs font-bold px-4 py-2 rounded-xl bg-blue-600 text-white transition flex items-center gap-1.5 shadow";
                     container.classList.remove('hidden');
@@ -862,30 +896,43 @@
                 return;
             }
 
+            const queryFilter = document.getElementById('taskSearch').value;
             const assigneeFilter = document.getElementById('filterAssignee').value;
             const priorityFilter = document.getElementById('filterPriority').value;
+            const overdueFilter = Boolean(document.getElementById('filterOverdue').checked);
+
+            const hasActiveFilters = Boolean(queryFilter.trim() || assigneeFilter || priorityFilter || overdueFilter);
+            document.getElementById('resetFiltersBtn').classList.toggle('hidden', !hasActiveFilters);
 
             const filteredTasks = TaskTools.filterTasks(tasks, {
-                query: document.getElementById('taskSearch').value,
+                query: queryFilter,
                 assignee: assigneeFilter,
-                priority: priorityFilter
+                priority: priorityFilter,
+                overdueOnly: overdueFilter
             });
             document.getElementById('searchResultCount').textContent = `${filteredTasks.length} tâche(s) sur ${tasks.length}`;
 
             board.innerHTML = COLUMNS.map(col => {
                 const colTasks = filteredTasks.filter(t => t.status === col.id);
                 return `
-                    <div class="bg-white/70 dark:bg-anthracite-900/40 border border-slate-200 dark:border-anthracite-700/80 rounded-3xl p-4 flex flex-col kanban-col shadow-sm"
-                         ondragover="event.preventDefault()"
-                         ondrop="dropTask(event, '${col.id}')">
+                    <div class="bg-white/70 dark:bg-anthracite-900/40 border border-slate-200 dark:border-anthracite-700/80 rounded-3xl p-4 flex flex-col kanban-col shadow-sm transition-all"
+                         data-status="${col.id}"
+                         ondragover="dragOverCol(event, this)"
+                         ondragleave="dragLeaveCol(event, this)"
+                         ondrop="dropTask(event, '${col.id}', this)">
                         <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200 dark:border-anthracite-700/60">
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full ${col.badge}"></span>
                                 <h3 class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">${col.label}</h3>
                             </div>
-                            <span class="text-xs bg-slate-100 dark:bg-anthracite-950 px-2 py-0.5 rounded-full text-slate-500 dark:text-slate-400 font-bold border border-slate-200 dark:border-anthracite-700/60">
-                                ${colTasks.length}
-                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs bg-slate-100 dark:bg-anthracite-950 px-2 py-0.5 rounded-full text-slate-500 dark:text-slate-400 font-bold border border-slate-200 dark:border-anthracite-700/60">
+                                    ${colTasks.length}
+                                </span>
+                                <button type="button" onclick="openTaskModal(null, '${col.id}')" class="text-slate-400 hover:text-blue-600 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-anthracite-800 transition" title="Ajouter dans ${col.label}" aria-label="Ajouter une tâche dans ${col.label}">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="space-y-3 flex-1 overflow-y-auto">
@@ -896,7 +943,7 @@
                                 const commentCount = (t.comments || []).length;
 
                                 return `
-                                    <div draggable="true" ondragstart="dragTask(event, '${t._id}')"
+                                    <div draggable="true" ondragstart="dragTask(event, '${t._id}')" ondragend="endDragTask(event)"
                                          class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700/80 hover:border-blue-500/80 rounded-2xl p-4 shadow-sm hover:shadow transition cursor-grab active:cursor-grabbing">
                                         <div class="flex justify-between items-start gap-2 mb-2">
                                             <span class="text-[10px] px-2 py-0.5 rounded-lg uppercase tracking-wider ${PRIORITY_STYLE[t.priority] || PRIORITY_STYLE.MEDIUM}">
@@ -917,14 +964,14 @@
                                             </div>
                                         </div>
 
-                                        <h4 class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">${t.title}</h4>
+                                        <h4 class="font-bold text-sm mb-1 text-slate-900 dark:text-slate-100">${escapeText(t.title)}</h4>
                                         ${t.dueDate ? `<p class="text-xs mb-2 ${TaskTools.isOverdue(t) ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500 dark:text-slate-400'}">${TaskTools.isOverdue(t) ? 'En retard · ' : 'Échéance · '}${escapeText(String(t.dueDate).slice(0, 10))}</p>` : ''}
-                                        ${t.description ? `<p class="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">${t.description}</p>` : ''}
+                                        ${t.description ? `<p class="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">${escapeText(t.description)}</p>` : ''}
 
                                         <div class="flex flex-wrap gap-1 mb-3">
                                             ${(t.tags || []).map(tag => `
                                                 <span class="text-[10px] bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20 px-2 py-0.5 rounded-md font-medium">
-                                                    #${tag}
+                                                    #${escapeText(tag)}
                                                 </span>
                                             `).join('')}
                                         </div>
@@ -933,8 +980,8 @@
                                             <!-- Multi-assignés stack -->
                                             <div class="flex items-center -space-x-1.5">
                                                 ${assignees.length > 0 ? assignees.map(a => `
-                                                    <span title="${a.name || 'Membre'}" class="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center text-white border-2 border-white dark:border-anthracite-850 shadow" style="background-color: ${a.avatarColor || '#3b82f6'}">
-                                                        ${a.name ? a.name.substring(0, 2).toUpperCase() : '?'}
+                                                    <span title="${escapeText(a.name || 'Membre')}" class="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center text-white border-2 border-white dark:border-anthracite-850 shadow" style="background-color: ${safeColor(a.avatarColor)}">
+                                                        ${escapeText(a.name ? a.name.substring(0, 2).toUpperCase() : '?')}
                                                     </span>
                                                 `).join('') : `<span class="text-slate-400 italic text-[11px]">Non assignée</span>`}
                                             </div>
@@ -945,7 +992,7 @@
                                         </div>
                                     </div>
                                 `;
-                            }).join('')}
+                            }).join('') || `<p class="text-xs text-slate-400 dark:text-slate-500 italic text-center py-6 border border-dashed border-slate-200 dark:border-anthracite-700/60 rounded-2xl">Aucune tâche</p>`}
                         </div>
                     </div>
                 `;
@@ -957,6 +1004,7 @@
             const done = tasks.filter(t => t.status === 'DONE').length;
             const active = tasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'REVIEW').length;
             const critical = tasks.filter(t => t.priority === 'CRITICAL').length;
+            const overdue = tasks.filter(t => TaskTools.isOverdue(t)).length;
             const percent = total > 0 ? Math.round((done / total) * 100) : 0;
 
             document.getElementById('kpiTotal').textContent = total;
@@ -964,6 +1012,7 @@
             document.getElementById('kpiDonePercent').textContent = `${percent}% de complétion`;
             document.getElementById('kpiActive').textContent = active;
             document.getElementById('kpiCritical').textContent = critical;
+            document.getElementById('kpiOverdue').textContent = overdue;
 
             const prioCounts = {
                 CRITICAL: tasks.filter(t => t.priority === 'CRITICAL').length,
@@ -971,7 +1020,7 @@
                 MEDIUM: tasks.filter(t => t.priority === 'MEDIUM').length,
                 LOW: tasks.filter(t => t.priority === 'LOW').length
             };
-
+            const prioLabels = { CRITICAL: 'Critique', HIGH: 'Haute', MEDIUM: 'Moyenne', LOW: 'Basse' };
             const prioColors = {
                 CRITICAL: 'bg-rose-500',
                 HIGH: 'bg-amber-500',
@@ -985,11 +1034,28 @@
                 return `
                     <div>
                         <div class="flex justify-between text-xs mb-1">
-                            <span class="text-slate-700 dark:text-slate-300 font-semibold">${key}</span>
+                            <span class="text-slate-700 dark:text-slate-300 font-semibold">${prioLabels[key] || key}</span>
                             <span class="text-slate-500 dark:text-slate-400 font-medium">${count} tâche(s) (${barPercent}%)</span>
                         </div>
                         <div class="w-full bg-slate-100 dark:bg-anthracite-900 rounded-full h-2.5 border border-slate-200 dark:border-anthracite-700">
                             <div class="${prioColors[key]} h-2.5 rounded-full transition-all duration-500" style="width: ${barPercent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const sContainer = document.getElementById('statusBars');
+            sContainer.innerHTML = COLUMNS.map(col => {
+                const count = tasks.filter(t => t.status === col.id).length;
+                const barPercent = total > 0 ? Math.round((count / total) * 100) : 0;
+                return `
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-700 dark:text-slate-300 font-semibold">${col.label}</span>
+                            <span class="text-slate-500 dark:text-slate-400 font-medium">${count} tâche(s) (${barPercent}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-anthracite-900 rounded-full h-2.5 border border-slate-200 dark:border-anthracite-700">
+                            <div class="${col.badge} h-2.5 rounded-full transition-all duration-500" style="width: ${barPercent}%"></div>
                         </div>
                     </div>
                 `;
@@ -1012,10 +1078,10 @@
                         <div>
                             <div class="flex justify-between items-center text-xs mb-1">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style="background-color: ${m.avatarColor || '#3b82f6'}">
-                                        ${m.name ? m.name.substring(0, 2).toUpperCase() : '?'}
+                                    <span class="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style="background-color: ${safeColor(m.avatarColor)}">
+                                        ${escapeText(m.name ? m.name.substring(0, 2).toUpperCase() : '?')}
                                     </span>
-                                    <span class="text-slate-800 dark:text-slate-200 font-semibold">${m.name}</span>
+                                    <span class="text-slate-800 dark:text-slate-200 font-semibold">${escapeText(m.name)}</span>
                                 </div>
                                 <span class="text-slate-500 dark:text-slate-400">${mTasks.length} tâche(s) (${mDone} terminées)</span>
                             </div>
@@ -1046,13 +1112,13 @@
                 return `
                     <div class="bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 p-5 rounded-3xl flex flex-col justify-between shadow-sm">
                         <div class="flex items-center gap-3 mb-3">
-                            <div class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shadow" style="background-color: ${m.avatarColor || '#3b82f6'}">
-                                ${m.name ? m.name.substring(0, 2).toUpperCase() : '??'}
+                            <div class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shadow" style="background-color: ${safeColor(m.avatarColor)}">
+                                ${escapeText(m.name ? m.name.substring(0, 2).toUpperCase() : '??')}
                             </div>
                             <div>
-                                <h4 class="font-bold text-sm text-slate-900 dark:text-white">${m.name}</h4>
-                                <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold">${m.role || 'Membre'}</p>
-                                <p class="text-[11px] text-slate-400">${m.email}</p>
+                                <h4 class="font-bold text-sm text-slate-900 dark:text-white">${escapeText(m.name)}</h4>
+                                <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold">${escapeText(m.role || 'Membre')}</p>
+                                <p class="text-[11px] text-slate-400">${escapeText(m.email)}</p>
                             </div>
                         </div>
                         <div class="pt-3 border-t border-slate-100 dark:border-anthracite-700 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
@@ -1064,26 +1130,60 @@
             }).join('');
         }
 
+        function resetFilters() {
+            document.getElementById('taskSearch').value = '';
+            document.getElementById('filterAssignee').value = '';
+            document.getElementById('filterPriority').value = '';
+            document.getElementById('filterOverdue').checked = false;
+            renderKanban();
+        }
+
         // DRAG & DROP
         let draggedTaskId = null;
         function dragTask(ev, taskId) {
             draggedTaskId = taskId;
-            ev.dataTransfer.setData('text/plain', taskId);
+            ev.currentTarget?.classList?.add('dragging');
+            ev.dataTransfer?.setData('text/plain', taskId);
         }
 
-        async function dropTask(ev, newStatus) {
-            ev.preventDefault();
-            if (!draggedTaskId) return;
-            await changeTaskStatus(draggedTaskId, newStatus);
+        function endDragTask(ev) {
+            ev.currentTarget?.classList?.remove('dragging');
             draggedTaskId = null;
+            document.querySelectorAll?.('.kanban-col').forEach(col => col.classList.remove('ring-2', 'ring-blue-500/60'));
+        }
+
+        function dragOverCol(ev, colEl) {
+            ev.preventDefault();
+            colEl?.classList?.add('ring-2', 'ring-blue-500/60');
+        }
+
+        function dragLeaveCol(ev, colEl) {
+            if (!colEl || (ev.relatedTarget && colEl.contains?.(ev.relatedTarget))) return;
+            colEl.classList?.remove('ring-2', 'ring-blue-500/60');
+        }
+
+        async function dropTask(ev, newStatus, colEl) {
+            ev.preventDefault();
+            colEl?.classList?.remove('ring-2', 'ring-blue-500/60');
+            if (!draggedTaskId) return;
+            const taskId = draggedTaskId;
+            draggedTaskId = null;
+            const existing = tasks.find(t => t._id === taskId);
+            if (!existing || existing.status === newStatus) return;
+            await changeTaskStatus(taskId, newStatus);
         }
 
         async function changeTaskStatus(taskId, status) {
+            const projectId = currentProject?._id;
+            const requestVersion = projectRequestVersion;
+            if (!projectId) return;
             await api(`/api/tasks/${taskId}`, {
                 method: 'PUT',
                 body: JSON.stringify({ status })
             });
-            tasks = await api(`/api/projects/${currentProject._id}/tasks`);
+            const updatedTasks = await api(`/api/projects/${projectId}/tasks`);
+            if (requestVersion !== projectRequestVersion || currentProject?._id !== projectId) return;
+            tasks = updatedTasks;
             renderCurrentView();
         }
 
@@ -1130,15 +1230,15 @@
 
                 return `
                     <div class="flex items-start gap-2.5">
-                        <div class="w-7 h-7 rounded-full text-[10px] font-bold flex items-center justify-center text-white shrink-0 mt-0.5 shadow" style="background-color: ${authorColor}">
-                            ${authorName.substring(0, 2).toUpperCase()}
+                        <div class="w-7 h-7 rounded-full text-[10px] font-bold flex items-center justify-center text-white shrink-0 mt-0.5 shadow" style="background-color: ${safeColor(authorColor)}">
+                            ${escapeText(authorName.substring(0, 2).toUpperCase())}
                         </div>
                         <div class="bg-white dark:bg-anthracite-900 border border-slate-200 dark:border-anthracite-700 rounded-2xl px-3.5 py-2.5 max-w-[85%] shadow-sm">
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="text-xs font-bold text-slate-900 dark:text-slate-200">${authorName}</span>
+                                <span class="text-xs font-bold text-slate-900 dark:text-slate-200">${escapeText(authorName)}</span>
                                 <span class="text-[10px] text-slate-400">${timeStr}</span>
                             </div>
-                            <p class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">${c.text}</p>
+                            <p class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">${escapeText(c.text)}</p>
                         </div>
                     </div>
                 `;
@@ -1180,15 +1280,29 @@
                     <button type="button" onclick="closeModal()" class="dialog-button">
                         Annuler
                     </button>
-                    <button type="submit" class="dialog-button dialog-primary">
+                    <button id="modalSubmitBtn" type="submit" class="dialog-button dialog-primary">
                         Enregistrer
                     </button>
                 </div>
             `;
             form.onsubmit = async (e) => {
                 e.preventDefault();
-                await onSubmit(new FormData(form));
-                closeModal();
+                const submitBtn = document.getElementById('modalSubmitBtn');
+                if (submitBtn?.disabled) return;
+                const prevText = submitBtn ? submitBtn.textContent : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Enregistrement…';
+                }
+                try {
+                    await onSubmit(new FormData(form));
+                    closeModal();
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = prevText;
+                    }
+                }
             };
             const overlay = document.getElementById('modalOverlay');
             overlay.showModal();
@@ -1230,7 +1344,7 @@
             showModal('Modifier l\'Entreprise', `
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom de l'entreprise</label>
-                    <input name="name" required value="${currentComp.name}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                    <input name="name" required value="${escapeText(currentComp.name)}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Plan SaaS</label>
@@ -1279,15 +1393,15 @@
             showModal('Modifier le Collaborateur', `
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom complet</label>
-                    <input name="name" required value="${existing.name}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                    <input name="name" required value="${escapeText(existing.name)}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email professionnel</label>
-                    <input name="email" type="email" required value="${existing.email}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                    <input name="email" type="email" required value="${escapeText(existing.email)}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rôle / Titre</label>
-                    <input name="role" value="${existing.role || ''}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                    <input name="role" value="${escapeText(existing.role || '')}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
             `, async (fd) => {
                 await api(`/api/users/${userId}`, {
@@ -1317,7 +1431,7 @@
             const userCheckboxes = users.map(u => `
                 <label class="flex items-center gap-2 text-xs bg-slate-50 dark:bg-anthracite-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-anthracite-700 cursor-pointer hover:border-blue-500">
                     <input type="checkbox" name="memberIds" value="${u._id}" checked class="rounded text-blue-600 focus:ring-0">
-                    <span>${u.name} <span class="text-slate-400">(${u.role})</span></span>
+                    <span>${escapeText(u.name)} <span class="text-slate-400">(${escapeText(u.role)})</span></span>
                 </label>
             `).join('');
 
@@ -1345,6 +1459,7 @@
                         memberIds: fd.getAll('memberIds')
                     })
                 });
+                document.getElementById('projectScope').value = 'active';
                 await loadProjects();
                 await selectProject(proj._id);
             });
@@ -1357,18 +1472,18 @@
             const userCheckboxes = users.map(u => `
                 <label class="flex items-center gap-2 text-xs bg-slate-50 dark:bg-anthracite-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-anthracite-700 cursor-pointer hover:border-blue-500">
                     <input type="checkbox" name="memberIds" value="${u._id}" ${currentMemberIds.includes(u._id.toString()) ? 'checked' : ''} class="rounded text-blue-600 focus:ring-0">
-                    <span>${u.name} <span class="text-slate-400">(${u.role})</span></span>
+                    <span>${escapeText(u.name)} <span class="text-slate-400">(${escapeText(u.role)})</span></span>
                 </label>
             `).join('');
 
             showModal('Modifier le Projet', `
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nom du projet</label>
-                    <input name="name" required value="${existing.name}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                    <input name="name" required value="${escapeText(existing.name)}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
-                    <textarea name="description" rows="2" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">${existing.description || ''}</textarea>
+                    <textarea name="description" rows="2" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">${escapeText(existing.description || '')}</textarea>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Membres assignés au projet</label>
@@ -1392,7 +1507,7 @@
             });
         }
 
-        function openTaskModal(taskId = null) {
+        function openTaskModal(taskId = null, defaultStatus = 'TODO') {
             const existing = taskId ? tasks.find(t => t._id === taskId) : null;
             const projectMembers = (currentProject && currentProject.memberIds && currentProject.memberIds.length > 0)
                 ? currentProject.memberIds
@@ -1407,10 +1522,10 @@
             const memberCheckboxes = projectMembers.map(u => `
                 <label class="flex items-center gap-2 text-xs bg-slate-50 dark:bg-anthracite-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-anthracite-700 cursor-pointer hover:border-blue-500">
                     <input type="checkbox" name="assigneeIds" value="${u._id}" ${currentAssigneeIds.includes(u._id.toString()) ? 'checked' : ''} class="rounded text-blue-600 focus:ring-0">
-                    <span class="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style="background-color: ${u.avatarColor || '#3b82f6'}">
-                        ${u.name ? u.name.substring(0, 2).toUpperCase() : '?'}
+                    <span class="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style="background-color: ${safeColor(u.avatarColor)}">
+                        ${escapeText(u.name ? u.name.substring(0, 2).toUpperCase() : '?')}
                     </span>
-                    <span>${u.name} <span class="text-slate-400">(${u.role || 'Membre'})</span></span>
+                    <span>${escapeText(u.name)} <span class="text-slate-400">(${escapeText(u.role || 'Membre')})</span></span>
                 </label>
             `).join('');
 
@@ -1421,17 +1536,17 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Titre de la tâche</label>
-                    <input name="title" required value="${existing ? existing.title : ''}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                    <input name="title" required value="${existing ? escapeText(existing.title) : ''}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Description</label>
-                    <textarea name="description" rows="2" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">${existing ? existing.description : ''}</textarea>
+                    <textarea name="description" rows="2" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">${existing ? escapeText(existing.description) : ''}</textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Statut</label>
                         <select name="status" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none">
-                            ${COLUMNS.map(c => `<option value="${c.id}" ${existing && existing.status === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
+                            ${COLUMNS.map(c => `<option value="${c.id}" ${(existing ? existing.status : defaultStatus) === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
                         </select>
                     </div>
                     <div>
@@ -1449,7 +1564,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tags (séparés par des virgules)</label>
-                    <input name="tags" placeholder="Backend, MongoDB, Sharding" value="${existing ? (existing.tags || []).join(', ') : ''}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                    <input name="tags" placeholder="Backend, MongoDB, Sharding" value="${existing ? escapeText((existing.tags || []).join(', ')) : ''}" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500">
                 </div>
             `, async (fd) => {
                 const assigneeIds = fd.getAll('assigneeIds');
@@ -1509,8 +1624,10 @@
             if (!await showConfirmation("Supprimer ce projet et toutes ses tâches ? Cette action est définitive.", { title: "Supprimer le projet", destructive: true, acceptLabel: "Supprimer le projet" })) return;
             await api(`/api/projects/${id}`, { method: 'DELETE' });
             await loadProjects();
-            if (projects.length > 0) {
-                await selectProject(projects[0]._id);
+            const scopeArchived = document.getElementById('projectScope').value === 'archived';
+            const nextProject = projects.find(p => Boolean(p.archived) === scopeArchived);
+            if (nextProject) {
+                await selectProject(nextProject._id);
             } else {
                 projectRequestVersion++;
                 currentProject = null;
@@ -1520,8 +1637,13 @@
 
         async function deleteTask(id) {
             if (!await showConfirmation("Supprimer cette tâche et sa discussion ? Cette action est définitive.", { title: "Supprimer la tâche", destructive: true, acceptLabel: "Supprimer la tâche" })) return;
+            const projectId = currentProject?._id;
+            const requestVersion = projectRequestVersion;
             await api(`/api/tasks/${id}`, { method: 'DELETE' });
-            tasks = await api(`/api/projects/${currentProject._id}/tasks`);
+            if (!projectId) return;
+            const updatedTasks = await api(`/api/projects/${projectId}/tasks`);
+            if (requestVersion !== projectRequestVersion || currentProject?._id !== projectId) return;
+            tasks = updatedTasks;
             renderCurrentView();
         }
 
@@ -1536,6 +1658,40 @@
                 await switchCompany(companies[0]._id);
             }
         }
+
+        function hasOpenDialog() {
+            return ['modalOverlay', 'chatModalOverlay', 'noticeDialog', 'activityDialog', 'notificationsDialog']
+                .some(id => Boolean(document.getElementById(id)?.open));
+        }
+
+        function handleGlobalKeydown(e) {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            const tag = (e.target?.tagName || '').toUpperCase();
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target?.isContentEditable) return;
+            if (hasOpenDialog()) return;
+            const authView = document.getElementById('authView');
+            if (authView && !authView.classList.contains('hidden')) return;
+            if (!currentProject) return;
+
+            if (e.key === '/' && currentView === 'kanban') {
+                e.preventDefault();
+                document.getElementById('taskSearch')?.focus();
+            } else if (e.key === 'n') {
+                e.preventDefault();
+                openTaskModal();
+            } else if (e.key === '1') {
+                e.preventDefault();
+                switchView('kanban');
+            } else if (e.key === '2') {
+                e.preventDefault();
+                switchView('dashboard');
+            } else if (e.key === '3') {
+                e.preventDefault();
+                switchView('team');
+            }
+        }
+
+        document.addEventListener?.('keydown', handleGlobalKeydown);
 
         // Lancement initial
         init();
