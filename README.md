@@ -21,11 +21,11 @@ Une fois lancée, l'application est immédiatement accessible dans votre navigat
 
 ## Données de Démonstration & Test de l'Isolation
 
-Au premier chargement, deux entreprises de démonstration sont injectées automatiquement pour vous permettre d'évaluer immédiatement les fonctionnalités :
+Lorsque l'application entre dans un espace sans entreprise enregistrée, elle peut charger deux entreprises de démonstration :
 1. **Nebula Tech (SaaS Cloud)** : Équipe DevOps/CTO travaillant sur le projet *Cluster MongoDB Sharding*.
 2. **GreenSolar Collectif** : Équipe produit travaillant sur le projet *Portail Autoconsommation*.
 
-> Un bouton **Réinitialiser & Démo** dans l'en-tête permet à tout moment de réinitialiser la base et de recharger ce jeu de données propre en 1 clic.
+> **Attention :** le bouton **Réinitialiser & Démo** demande confirmation, puis remplace les données de toutes les entreprises, y compris les notifications. Un échec de connexion démo ne déclenche jamais cette réinitialisation.
 
 ### Valider l'Isolation Multi-Tenant :
 1. Sélectionnez **Nebula Tech** dans le sélecteur en haut : vous visualisez ses collaborateurs (*Sarah Connor, Marc Levy*), ses projets et son tableau Kanban.
@@ -58,7 +58,7 @@ node tests/productivity.integration.js
 Le second test nécessite l'application et MongoDB en fonctionnement. Il crée deux entreprises temporaires et ne supprime que celles-ci dans son nettoyage ; il ne réinitialise jamais la démonstration.
 
 - **Isolation Logicielle Stricte (*Shared Database, Shared Schema*)** :
-  - Clé de partitionnement `companyId` présente au premier niveau de chaque document (`users`, `projects`, `tasks`).
+  - Clé de cloisonnement `companyId` présente au premier niveau de chaque document enfant (`users`, `projects`, `tasks`, `notifications`).
   - Filtrage systématique par middleware sur le header `X-Company-Id`.
   - Rejet HTTP 403 en cas de tentative d'affectation d'un utilisateur externe à un projet.
 - **CRUD Complet** :
@@ -80,12 +80,12 @@ Le second test nécessite l'application et MongoDB en fonctionnement. Il crée d
 L'architecture anticipe rigoureusement l'évolution vers un cluster MongoDB distribué :
 
 1. **Shard Key Ciblée : `{ "companyId": 1, "_id": 1 }`** :
-   - Garantit la colocalisation de l'ensemble des données d'un même client sur un unique shard physique.
-   - Élimine le *Scatter-Gather* pour les opérations quotidiennes.
+   - Cible d'évolution, non configurée dans le déploiement actuel MongoDB standalone.
+   - Le préfixe entreprise aide le ciblage, mais une entreprise peut occuper plusieurs chunks et shards. Colocalisation et routage doivent être vérifiés sur le cluster.
 2. **Configuration Réseau Externalisée (`config.env`)** :
    - L'application lit exclusivement la variable d'environnement `MONGO_URI`.
-   - Lors de la Partie II, il suffira de remplacer la chaîne de connexion dans `config.env` par celle du cluster répliqué ou des routeurs `mongos` (ex. `mongodb://mongos1:27017,mongos2:27017/nexusflow_saas?replicaSet=...`) et de relancer le conteneur.
-   - **Aucune modification du code source n'est nécessaire.**
+   - Pour un replica set : fournir sa liste de membres et `replicaSet=rs0`. Pour des routeurs `mongos` : fournir leurs adresses sans option `replicaSet` ni `directConnection=true`.
+   - Le point de connexion est externalisé ; le déploiement, les index et le routage devront aussi être validés.
 
 ---
 
@@ -101,10 +101,17 @@ L'architecture anticipe rigoureusement l'évolution vers un cluster MongoDB dist
 ├── server.js                  # Point d'entrée de l'application et serveur de fichiers statiques
 ├── src/
 │   ├── middleware/tenant.js   # Middleware d'isolation multi-tenant stricte
-│   ├── models/                # Modèles et schémas Mongoose (Company, User, Project, Task)
-│   └── routes/                # Routes API REST (companies, users, projects, tasks, seed)
+│   ├── models/                # Company, User, Project, Task, Notification
+│   ├── routes/                # Auth, CRUD, notifications et seed
+│   └── utils/taskActivity.js  # Dates, historique serveur et livraison des notifications
 ├── public/
-│   └── index.html             # Frontend SPA moderne (Tailwind CSS, SVG Icons, Drag & Drop)
+│   ├── index.html             # SPA, formulaires et vues Kanban / Dashboard / Équipe
+│   ├── dialogs.js             # File de confirmations et erreurs
+│   ├── dialogs.css            # Modales clair/sombre et défilement mobile
+│   ├── task-tools.js          # Recherche et calcul du retard
+│   └── productivity.js        # Historique, archives et notifications
+├── tests/                     # Tests automatisés et intégration HTTP explicite
+├── docs/                      # Référence API, guide de test et historique des livraisons
 ├── SPEC_TECHNIQUE.md          # Livrable 1 : Spécification technique & modèle NoSQL
 ├── SPEC_FONCTIONNELLE.md       # Livrable 2 : Spécification fonctionnelle
 ├── README.md                  # Livrable 3 : Documentation d'utilisation
@@ -121,3 +128,20 @@ Pour exécuter la suite de tests automatisée (validation des schémas, de l'iso
 ```bash
 npm test
 ```
+
+Pour une exécution locale hors Docker, utiliser Node.js 20+ et `npm install`, puis `npm run dev`. Fournir un `MONGO_URI` accessible depuis l'hôte : le nom `mongodb` du fichier `config.env` est destiné au réseau Docker.
+
+## Dialogues et navigation
+
+Les confirmations et erreurs utilisent des dialogues harmonisés avec les thèmes clair et sombre, des actions destructrices rouges et le focus initial sur « Annuler ». Échap ferme le dialogue supérieur. Les formulaires conservent leurs champs sous une erreur ; les filtres masqués conservent leur espace pour stabiliser les onglets.
+
+## Documentation et limites
+
+- [Guide de tests manuels et automatisés](docs/TESTING.md)
+- [Référence des routes API](docs/API.md)
+- [Spécification fonctionnelle](SPEC_FONCTIONNELLE.md)
+- [Modélisation et limites techniques](SPEC_TECHNIQUE.md)
+- [Consignes pour les agents](AGENTS.md)
+- [Historique des corrections](docs/functional-fixes.md)
+
+Dernière validation de la livraison productivité : 39 tests automatisés réussis, intégration HTTP MongoDB réussie et reconstruction Docker réussie. Ce résultat est daté du 23 novembre 2026, pas une garantie des exécutions futures. Le rendu visuel et le confinement du focus n'ont pas été validés dans un navigateur réel dans cet environnement, faute de Chrome.

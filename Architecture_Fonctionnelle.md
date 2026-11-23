@@ -14,7 +14,7 @@
 ### 2.0 Module d'Authentification Effective & Changement de Compte
 - **Écran de Connexion & Inscription** : Interface d'accueil permettant à tout utilisateur de se connecter avec son email et mot de passe, ou de créer un nouveau compte avec création de son entreprise (tenant) dédiée.
 - **Accès Démo 1-Clic** : Boutons d'accès direct pour tester instantanément l'application sous l'identité de *Sarah Connor (Nebula Tech)* ou d'*Elena Rostova (GreenSolar)* sans saisie manuelle.
-- **Gestion de Session & Déconnexion** : Mémorisation locale sécurisée de la session (`localStorage`), bouton de déconnexion immédiate et sélecteur de changement de compte à la volée.
+- **Identité de démonstration & Déconnexion** : Mémorisation locale de l'identité (`localStorage`), bouton de déconnexion et sélecteur de compte. Les API utilisent des en-têtes contrôlés par le client ; il n'existe pas de session serveur authentifiée ni de contrôle de rôles opposable.
 
 ### 2.1 Sélecteur d'Espace de Travail (*Workspace / Tenant Switcher*)
 - Un sélecteur en en-tête permet à l'utilisateur de basculer instantanément entre les entreprises enregistrées.
@@ -72,7 +72,7 @@
 - **Filtre par priorité** : Affichage ciblé selon le degré d'urgence.
 
 ### 4.5 Multi-Assignation de Collaborateurs
-- Chaque tâche supporte l'assignation simultanée de plusieurs collaborateurs appartenant au projet.
+- Chaque tâche supporte l'assignation simultanée de plusieurs collaborateurs de l'entreprise. Le formulaire propose les membres du projet, ou ceux de l'entreprise si le projet n'a pas de membres ; l'API vérifie l'entreprise, pas l'appartenance au projet.
 - Affichage visuel en cascade (*Avatar Stack*) sur les cartes Kanban et dans la vue détaillée.
 
 ### 4.6 Fil de Discussion & Chat par Tâche
@@ -94,3 +94,43 @@
 - **Thème Sombre par défaut** : Nuances de noir anthracite profond, cartes bleu nuit ardoisé, typographie blanc cassé et accents bleu électrique.
 - **Thème Clair** : Nuances de blanc cassé, cartes blanches épurées, typographie ardoise et accents bleu royal.
 - **Bouton d'Inversion & Persistance** : Icône vectorielle Soleil/Lune dans l'en-tête mémorisant automatiquement le choix de l'utilisateur.
+
+### 4.10 Recherche et échéances
+
+- Recherche instantanée dans les titres et tags des tâches déjà chargées, sans distinction de casse ou d'accent.
+- Combinaison avec les filtres membre/priorité et compteur des résultats ; cette recherche ne couvre pas les autres projets.
+- Échéance facultative dans le formulaire : une valeur vide retire la date. Le jour de l'échéance n'est pas en retard.
+- Badge « En retard » pour une date antérieure au jour local de l'utilisateur, hors tâches `DONE`.
+
+### 4.11 Historique des tâches
+
+- Création, modifications directes et commentaires sont enregistrés côté serveur avec date et auteur de l'entreprise active.
+- Les modifications affichent les anciennes et nouvelles valeurs normalisées. Un client ne peut pas fournir son propre historique via les routes de tâches.
+- Les anciennes tâches n'ont pas d'historique rétroactif ; les opérations de nettoyage en masse ne constituent pas un audit exhaustif.
+
+### 4.12 Archivage des projets
+
+- Actions Archiver et Restaurer dans la barre latérale, après confirmation.
+- Sélecteur « Projets actifs / Projets archivés » ; aucun effacement de tâches lors de l'archivage.
+- Les archives restent consultables et modifiables, et les liens de notifications peuvent les ouvrir.
+
+### 4.13 Notifications internes
+
+- Une assignation avertit les nouveaux assignés ; un commentaire avertit les assignés et participants précédents.
+- L'auteur est exclu et les destinataires sont dédupliqués puis validés dans l'entreprise.
+- Boîte par utilisateur : 100 notifications récentes, compteur de toutes les non-lues, action de lecture globale et ouverture de la tâche avec marquage individuel.
+- Actualisation à l'ouverture, au changement de compte/entreprise et après envoi d'un commentaire ; pas de push, e-mail ou synchronisation continue.
+- Livraison best-effort : une panne après sauvegarde de la tâche est journalisée, sans annulation de la sauvegarde ni relivraison garantie.
+
+### 4.14 Dialogues et stabilité
+
+- Dialogues harmonisés clair/sombre pour confirmations, erreurs, formulaires, discussion, historique et notifications.
+- Annulation sélectionnée initialement pour les confirmations ; actions destructrices rouges. Échap ferme le dialogue supérieur.
+- Les erreurs ne remplacent pas les formulaires. Les filtres masqués gardent leur place pour stabiliser les onglets.
+- Les réponses obsolètes de chargement de tâches/projets/notifications sont ignorées selon les gardes de contexte implémentées.
+
+## 5. Limites et recette
+
+Les entreprises, utilisateurs et rôles affichés ne constituent pas une autorisation serveur de production. La réinitialisation démo efface les données de toutes les entreprises, notifications comprises, après confirmation dans l'interface. Un échec de connexion démo ne réinitialise pas les données.
+
+Voir [docs/TESTING.md](docs/TESTING.md) pour la recette et [docs/API.md](docs/API.md) pour les routes. Les tests isolés ne remplacent pas la vérification visuelle et clavier dans un navigateur réel.
