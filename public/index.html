@@ -663,6 +663,7 @@
             currentCompanyId = companyId;
             currentProject = null;
             tasks = [];
+            document.getElementById('filterAssignee').value = '';
             document.getElementById('filterPriority').value = '';
             document.getElementById('taskSearch').value = '';
             document.getElementById('projectScope').value = 'active';
@@ -1090,11 +1091,16 @@
         }
 
         async function changeTaskStatus(taskId, status) {
+            const projectId = currentProject?._id;
+            const requestVersion = projectRequestVersion;
+            if (!projectId) return;
             await api(`/api/tasks/${taskId}`, {
                 method: 'PUT',
                 body: JSON.stringify({ status })
             });
-            tasks = await api(`/api/projects/${currentProject._id}/tasks`);
+            const updatedTasks = await api(`/api/projects/${projectId}/tasks`);
+            if (requestVersion !== projectRequestVersion || currentProject?._id !== projectId) return;
+            tasks = updatedTasks;
             renderCurrentView();
         }
 
@@ -1356,6 +1362,7 @@
                         memberIds: fd.getAll('memberIds')
                     })
                 });
+                document.getElementById('projectScope').value = 'active';
                 await loadProjects();
                 await selectProject(proj._id);
             });
@@ -1520,8 +1527,10 @@
             if (!await showConfirmation("Supprimer ce projet et toutes ses tâches ? Cette action est définitive.", { title: "Supprimer le projet", destructive: true, acceptLabel: "Supprimer le projet" })) return;
             await api(`/api/projects/${id}`, { method: 'DELETE' });
             await loadProjects();
-            if (projects.length > 0) {
-                await selectProject(projects[0]._id);
+            const scopeArchived = document.getElementById('projectScope').value === 'archived';
+            const nextProject = projects.find(p => Boolean(p.archived) === scopeArchived);
+            if (nextProject) {
+                await selectProject(nextProject._id);
             } else {
                 projectRequestVersion++;
                 currentProject = null;
@@ -1531,8 +1540,13 @@
 
         async function deleteTask(id) {
             if (!await showConfirmation("Supprimer cette tâche et sa discussion ? Cette action est définitive.", { title: "Supprimer la tâche", destructive: true, acceptLabel: "Supprimer la tâche" })) return;
+            const projectId = currentProject?._id;
+            const requestVersion = projectRequestVersion;
             await api(`/api/tasks/${id}`, { method: 'DELETE' });
-            tasks = await api(`/api/projects/${currentProject._id}/tasks`);
+            if (!projectId) return;
+            const updatedTasks = await api(`/api/projects/${projectId}/tasks`);
+            if (requestVersion !== projectRequestVersion || currentProject?._id !== projectId) return;
+            tasks = updatedTasks;
             renderCurrentView();
         }
 
