@@ -233,9 +233,9 @@
             </aside>
 
             <!-- ZONE CENTRALE : NAVIGATION PAR ONGLETS & VUES -->
-            <main class="flex-1 p-6 overflow-x-auto flex flex-col bg-slate-50 dark:bg-anthracite-950">
+            <main class="flex-1 p-6 overflow-y-auto flex flex-col bg-slate-50 dark:bg-anthracite-950">
                 <!-- En-tête de Projet & Barre d'onglets -->
-                <div id="projectHeader" class="flex flex-wrap justify-between items-center gap-4 mb-5 pb-4 border-b border-slate-200 dark:border-anthracite-800">
+                <div id="projectHeader" class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-5 pb-4 border-b border-slate-200 dark:border-anthracite-800">
                     <div>
                         <h2 id="activeProjectTitle" class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                             Sélectionnez ou créez un projet
@@ -575,9 +575,9 @@
                 currentUserId = res.user._id;
                 currentCompanyId = res.company._id;
                 await enterApp();
-            } catch {
-                await seedDemoData(false);
-                await loginAsDemo(demoEmail);
+            } catch (err) {
+                // A failed login must never reset shared data or retry indefinitely.
+                console.error(err);
             }
         }
 
@@ -598,9 +598,12 @@
         }
 
         async function switchCompany(companyId) {
+            projectRequestVersion++;
             currentCompanyId = companyId;
             currentProject = null;
             tasks = [];
+            document.getElementById('filterPriority').value = '';
+            renderCurrentView();
             renderCompanySelect();
             await Promise.all([loadUsers(), loadProjects()]);
             if (projects.length > 0) {
@@ -709,7 +712,9 @@
             }).join('');
         }
 
+        let projectRequestVersion = 0;
         async function selectProject(projectId) {
+            const requestVersion = ++projectRequestVersion;
             currentProject = projects.find(p => p._id === projectId) || null;
             loadProjects();
             if (!currentProject) return;
@@ -719,7 +724,11 @@
             document.getElementById('viewTabs').classList.remove('hidden');
             document.getElementById('kanbanControls').classList.remove('hidden');
 
-            tasks = await api(`/api/projects/${projectId}/tasks`);
+            tasks = [];
+            switchView(currentView);
+            const projectTasks = await api(`/api/projects/${projectId}/tasks`);
+            if (requestVersion !== projectRequestVersion) return;
+            tasks = projectTasks;
             renderCurrentView();
         }
 
@@ -739,16 +748,30 @@
             });
 
             const kControls = document.getElementById('kanbanControls');
+            // Preserve the controls' footprint so switching views never moves the tabs.
+            kControls.classList.remove('hidden');
             if (viewName === 'kanban') {
-                kControls.classList.remove('hidden');
+                kControls.classList.remove('invisible');
             } else {
-                kControls.classList.add('hidden');
+                kControls.classList.add('invisible');
             }
 
             renderCurrentView();
         }
 
         function renderCurrentView() {
+            if (!currentProject) {
+                tasks = [];
+                document.getElementById('activeProjectTitle').textContent = 'Sélectionnez ou créez un projet';
+                document.getElementById('activeProjectDesc').textContent = '';
+                document.getElementById('viewTabs').classList.add('hidden');
+                document.getElementById('kanbanControls').classList.add('hidden');
+                document.getElementById('kanbanBoard').innerHTML = '';
+                ['Kanban', 'Dashboard', 'Team'].forEach(view => {
+                    document.getElementById('view' + view + 'Container').classList.add('hidden');
+                });
+                return;
+            }
             if (currentView === 'kanban') renderKanban();
             else if (currentView === 'dashboard') renderDashboard();
             else if (currentView === 'team') renderTeam();
@@ -1399,8 +1422,9 @@
             await api(`/api/users/${id}`, { method: 'DELETE' });
             await loadUsers();
             if (currentProject) {
-                tasks = await api(`/api/projects/${currentProject._id}/tasks`);
-                renderCurrentView();
+                const projectId = currentProject._id;
+                await loadProjects();
+                await selectProject(projectId);
             }
         }
 
@@ -1411,6 +1435,7 @@
             if (projects.length > 0) {
                 await selectProject(projects[0]._id);
             } else {
+                projectRequestVersion++;
                 currentProject = null;
                 renderCurrentView();
             }
