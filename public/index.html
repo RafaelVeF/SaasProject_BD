@@ -280,7 +280,7 @@
                             <option value="MEDIUM">Moyenne</option>
                             <option value="LOW">Basse</option>
                         </select>
-                        <button onclick="openTaskModal()" class="bg-blue-600 hover:bg-blue-500 text-sm font-bold text-white px-4 py-2 rounded-xl transition shadow-md shadow-blue-500/20 flex items-center gap-1.5">
+                        <button onclick="openTaskModal()" title="Raccourci : n" class="bg-blue-600 hover:bg-blue-500 text-sm font-bold text-white px-4 py-2 rounded-xl transition shadow-md shadow-blue-500/20 flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             <span>Nouvelle Tâche</span>
                         </button>
@@ -291,7 +291,7 @@
                 <div id="viewKanbanContainer" class="flex-1 flex flex-col">
                     <div class="flex flex-wrap items-center gap-3 mb-4">
                         <label for="taskSearch" class="sr-only">Rechercher par titre ou tag</label>
-                        <input id="taskSearch" type="search" oninput="renderKanban()" placeholder="Rechercher par titre ou tag…" class="w-full sm:max-w-sm bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition">
+                        <input id="taskSearch" type="search" oninput="renderKanban()" title="Raccourci : /" placeholder="Rechercher par titre ou tag… ( / )" class="w-full sm:max-w-sm bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition">
                         <label class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-anthracite-850 border border-slate-200 dark:border-anthracite-700 px-3 py-2 rounded-xl cursor-pointer select-none hover:border-blue-500 transition">
                             <input id="filterOverdue" type="checkbox" onchange="renderKanban()" class="rounded text-rose-600 focus:ring-0">
                             <span>En retard uniquement</span>
@@ -911,9 +911,14 @@
                                 <span class="w-2.5 h-2.5 rounded-full ${col.badge}"></span>
                                 <h3 class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">${col.label}</h3>
                             </div>
-                            <span class="text-xs bg-slate-100 dark:bg-anthracite-950 px-2 py-0.5 rounded-full text-slate-500 dark:text-slate-400 font-bold border border-slate-200 dark:border-anthracite-700/60">
-                                ${colTasks.length}
-                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs bg-slate-100 dark:bg-anthracite-950 px-2 py-0.5 rounded-full text-slate-500 dark:text-slate-400 font-bold border border-slate-200 dark:border-anthracite-700/60">
+                                    ${colTasks.length}
+                                </span>
+                                <button type="button" onclick="openTaskModal(null, '${col.id}')" class="text-slate-400 hover:text-blue-600 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-anthracite-800 transition" title="Ajouter dans ${col.label}" aria-label="Ajouter une tâche dans ${col.label}">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="space-y-3 flex-1 overflow-y-auto">
@@ -1242,15 +1247,29 @@
                     <button type="button" onclick="closeModal()" class="dialog-button">
                         Annuler
                     </button>
-                    <button type="submit" class="dialog-button dialog-primary">
+                    <button id="modalSubmitBtn" type="submit" class="dialog-button dialog-primary">
                         Enregistrer
                     </button>
                 </div>
             `;
             form.onsubmit = async (e) => {
                 e.preventDefault();
-                await onSubmit(new FormData(form));
-                closeModal();
+                const submitBtn = document.getElementById('modalSubmitBtn');
+                if (submitBtn?.disabled) return;
+                const prevText = submitBtn ? submitBtn.textContent : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Enregistrement…';
+                }
+                try {
+                    await onSubmit(new FormData(form));
+                    closeModal();
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = prevText;
+                    }
+                }
             };
             const overlay = document.getElementById('modalOverlay');
             overlay.showModal();
@@ -1455,7 +1474,7 @@
             });
         }
 
-        function openTaskModal(taskId = null) {
+        function openTaskModal(taskId = null, defaultStatus = 'TODO') {
             const existing = taskId ? tasks.find(t => t._id === taskId) : null;
             const projectMembers = (currentProject && currentProject.memberIds && currentProject.memberIds.length > 0)
                 ? currentProject.memberIds
@@ -1494,7 +1513,7 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Statut</label>
                         <select name="status" class="w-full bg-slate-50 dark:bg-anthracite-900 border border-slate-300 dark:border-anthracite-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none">
-                            ${COLUMNS.map(c => `<option value="${c.id}" ${existing && existing.status === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
+                            ${COLUMNS.map(c => `<option value="${c.id}" ${(existing ? existing.status : defaultStatus) === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}
                         </select>
                     </div>
                     <div>
@@ -1606,6 +1625,40 @@
                 await switchCompany(companies[0]._id);
             }
         }
+
+        function hasOpenDialog() {
+            return ['modalOverlay', 'chatModalOverlay', 'noticeDialog', 'activityDialog', 'notificationsDialog']
+                .some(id => Boolean(document.getElementById(id)?.open));
+        }
+
+        function handleGlobalKeydown(e) {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            const tag = (e.target?.tagName || '').toUpperCase();
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target?.isContentEditable) return;
+            if (hasOpenDialog()) return;
+            const authView = document.getElementById('authView');
+            if (authView && !authView.classList.contains('hidden')) return;
+            if (!currentProject) return;
+
+            if (e.key === '/' && currentView === 'kanban') {
+                e.preventDefault();
+                document.getElementById('taskSearch')?.focus();
+            } else if (e.key === 'n') {
+                e.preventDefault();
+                openTaskModal();
+            } else if (e.key === '1') {
+                e.preventDefault();
+                switchView('kanban');
+            } else if (e.key === '2') {
+                e.preventDefault();
+                switchView('dashboard');
+            } else if (e.key === '3') {
+                e.preventDefault();
+                switchView('team');
+            }
+        }
+
+        document.addEventListener?.('keydown', handleGlobalKeydown);
 
         // Lancement initial
         init();
