@@ -12,7 +12,8 @@ router.post('/', async (req, res) => {
             Company.deleteMany({}),
             User.deleteMany({}),
             Project.deleteMany({}),
-            Task.deleteMany({})
+            Task.deleteMany({}),
+            require('../models/Notification').deleteMany({})
         ]);
 
         // Entreprise 1 : Nebula Tech (SaaS Cloud)

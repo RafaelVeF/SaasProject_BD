@@ -72,11 +72,18 @@ const taskSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    history: [{
+        actorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+        actorName: { type: String, required: true },
+        action: { type: String, enum: ['created', 'updated', 'commented'], required: true },
+        changes: [{ _id: false, field: String, before: String, after: String }],
+        createdAt: { type: Date, default: Date.now }
+    }],
     createdAt: {
         type: Date,
         default: Date.now
     }
-});
+}, { optimisticConcurrency: true });
 
 taskSchema.index({ companyId: 1, projectId: 1, status: 1 });
 

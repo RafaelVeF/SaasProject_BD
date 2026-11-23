@@ -31,6 +31,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/companies', companiesRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/projects', projectsRouter);
+app.use('/api/notifications', require('./src/routes/notifications'));
 app.use('/api/seed', seedRouter);
 app.use('/api', tasksRouter);
 

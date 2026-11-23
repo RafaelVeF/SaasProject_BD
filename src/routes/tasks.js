@@ -4,6 +4,7 @@ const Task = require('../models/Task');
 const Project = require('../models/Project');
 const User = require('../models/User');
 const requireTenant = require('../middleware/tenant');
+const { taskPayload, changesFor, actorFor, notifySafely } = require('../utils/taskActivity');
 
 // GET /api/projects/:projectId/tasks - Tâches d'un projet pour l'entreprise
 router.get('/projects/:projectId/tasks', requireTenant, async (req, res) => {
@@ -39,6 +40,8 @@ router.post('/projects/:projectId/tasks', requireTenant, async (req, res) => {
         if (!project) {
             return res.status(404).json({ error: "Projet introuvable dans cette entreprise." });
         }
+        req.body = taskPayload(req.body);
+        const actor = await actorFor(req);
 
         // Harmonisation multi-assignation
         let assigneeIds = [];
@@ -64,8 +67,10 @@ router.post('/projects/:projectId/tasks', requireTenant, async (req, res) => {
             companyId: req.companyId,
             projectId: req.params.projectId,
             assigneeIds: assigneeIds,
-            assigneeId: assigneeIds[0] || null
+            assigneeId: assigneeIds[0] || null,
+            history: [{ ...actor, action: 'created', changes: [] }]
         });
+        await notifySafely(task, assigneeIds, actor, 'assignment');
 
         const populated = await task.populate([
             { path: 'assigneeId', select: 'name email role avatarColor' },
@@ -84,6 +89,7 @@ router.put('/tasks/:id', requireTenant, async (req, res) => {
         return res.status(400).json({ error: "Identifiant de tâche invalide." });
     }
     try {
+        req.body = taskPayload(req.body);
         delete req.body.companyId;
         delete req.body.projectId;
         delete req.body._id;
@@ -116,16 +122,24 @@ router.put('/tasks/:id', requireTenant, async (req, res) => {
             }
         }
 
-        const task = await Task.findOneAndUpdate(
-            { _id: req.params.id, companyId: req.companyId },
-            req.body,
-            { new: true, runValidators: true }
-        )
-            .populate('assigneeId', 'name email role avatarColor')
-            .populate('assigneeIds', 'name email role avatarColor')
-            .populate('comments.userId', 'name email role avatarColor');
-
+        const task = await Task.findOne({ _id: req.params.id, companyId: req.companyId });
         if (!task) return res.status(404).json({ error: "Tâche introuvable." });
+        const actor = await actorFor(req);
+        const previousAssignees = (task.assigneeIds?.length ? task.assigneeIds : [task.assigneeId].filter(Boolean)).map(String);
+        const before = task.toObject();
+        task.set(req.body);
+        // Compare cast/trimmed values, not raw input, so history matches persisted data.
+        const normalized = Object.fromEntries(Object.keys(req.body).map(field => [field, task.get(field)]));
+        const changes = changesFor(before, normalized);
+        if (changes.length) task.history.push({ ...actor, action: 'updated', changes });
+        await task.save();
+        const newAssignees = (task.assigneeIds || []).filter(id => !previousAssignees.includes(String(id)));
+        await notifySafely(task, newAssignees, actor, 'assignment');
+        await task.populate([
+            { path: 'assigneeId', select: 'name email role avatarColor' },
+            { path: 'assigneeIds', select: 'name email role avatarColor' },
+            { path: 'comments.userId', select: 'name email role avatarColor' }
+        ]);
         res.json(task);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -145,16 +159,13 @@ router.post('/tasks/:id/comments', requireTenant, async (req, res) => {
         const task = await Task.findOne({ _id: req.params.id, companyId: req.companyId });
         if (!task) return res.status(404).json({ error: "Tâche introuvable." });
 
-        let authorName = req.body.authorName || 'Collaborateur';
-        let userId = null;
-
-        if (req.body.userId && require('mongoose').Types.ObjectId.isValid(req.body.userId)) {
-            const user = await User.findOne({ _id: req.body.userId, companyId: req.companyId });
-            if (user) {
-                authorName = user.name;
-                userId = user._id;
-            }
-        }
+        const actor = await actorFor(req);
+        const authorName = actor.actorName;
+        const userId = actor.actorId;
+        const recipients = [
+            ...(task.assigneeIds || []), task.assigneeId,
+            ...(task.comments || []).map(comment => comment.userId)
+        ];
 
         task.comments.push({
             userId,
@@ -162,8 +173,10 @@ router.post('/tasks/:id/comments', requireTenant, async (req, res) => {
             text: req.body.text.trim(),
             createdAt: new Date()
         });
+        task.history.push({ ...actor, action: 'commented', changes: [] });
 
         await task.save();
+        await notifySafely(task, recipients, actor, 'comment');
         const populated = await task.populate([
             { path: 'assigneeId', select: 'name email role avatarColor' },
             { path: 'assigneeIds', select: 'name email role avatarColor' },
@@ -184,6 +197,7 @@ router.delete('/tasks/:id', requireTenant, async (req, res) => {
     try {
         const deleted = await Task.findOneAndDelete({ _id: req.params.id, companyId: req.companyId });
         if (!deleted) return res.status(404).json({ error: "Tâche introuvable." });
+        await require('../models/Notification').deleteMany({ taskId: req.params.id, companyId: req.companyId });
         res.json({ message: "Tâche supprimée." });
     } catch (err) {
         res.status(500).json({ error: err.message });
