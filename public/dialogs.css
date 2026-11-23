@@ -1,0 +1,57 @@
+.app-dialog {
+    margin: auto;
+    padding: 0;
+    width: min( calc(100% - 2rem), 32rem);
+    max-height: calc(100dvh - 2rem);
+    border: 1px solid #cbd5e1;
+    border-radius: 1.5rem;
+    color: #0f172a;
+    background: #fff;
+    box-shadow: 0 24px 80px #0004;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+.app-dialog:not([open]) { display: none; }
+.app-dialog::backdrop { background: #02061799; backdrop-filter: blur(6px); }
+.dark .app-dialog { background: #101827; border-color: #334155; color: #f8fafc; }
+.dark .app-dialog::backdrop { background: #000b; }
+.app-dialog .dialog-content { padding: 1.5rem; }
+.app-dialog .dialog-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; margin-bottom: 1.25rem;
+}
+.app-dialog .dialog-title { font-size: 1.125rem; font-weight: 900; }
+.app-dialog .dialog-message { font-size: .875rem; line-height: 1.65; color: #475569; overflow-wrap: anywhere; }
+.dark .app-dialog .dialog-message { color: #cbd5e1; }
+.app-dialog .dialog-actions {
+    display: flex; justify-content: flex-end; gap: .5rem;
+    border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1.5rem;
+}
+.dark .app-dialog .dialog-actions { border-color: #334155; }
+.app-dialog .dialog-button {
+    border-radius: .75rem; padding: .625rem 1rem; font-size: .75rem;
+    font-weight: 700; background: #f1f5f9; color: #334155;
+    cursor: pointer; transition: background-color .15s, transform .15s;
+}
+.dark .app-dialog .dialog-button { background: #1e293b; color: #e2e8f0; }
+.app-dialog .dialog-button:hover { background: #e2e8f0; transform: translateY(-1px); }
+.dark .app-dialog .dialog-button:hover { background: #334155; }
+.app-dialog .dialog-button:active { transform: translateY(0); }
+.app-dialog .dialog-button.dialog-primary { background: #2563eb; color: #fff; }
+.app-dialog .dialog-button.dialog-primary:hover { background: #1d4ed8; }
+.app-dialog .dialog-button.dialog-primary[data-destructive="true"] { background: #be123c; }
+.app-dialog .dialog-button.dialog-primary[data-destructive="true"]:hover { background: #9f1239; }
+.app-dialog :focus-visible { outline: 2px solid #3b82f6; outline-offset: 3px; }
+.app-dialog .dialog-close { padding: .5rem; flex-shrink: 0; }
+.app-dialog.chat-dialog { width: min(calc(100% - 2rem), 36rem); overflow: auto; }
+.chat-dialog > div { max-height: none; }
+#chatMessageList { flex: none; max-height: 45dvh; min-height: min(240px, 25dvh); overflow-wrap: anywhere; }
+#chatInput { min-width: 0; }
+@media (max-width: 480px) {
+    .app-dialog .dialog-content { padding: 1.25rem; }
+    .app-dialog .dialog-actions { flex-direction: column-reverse; }
+    .app-dialog .dialog-actions > button { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .app-dialog *, .app-dialog *::before, .app-dialog *::after { transition: none !important; animation: none !important; }
+}
